@@ -22,7 +22,7 @@ app says the documents are not available yet rather than showing drafts as final
 
 ```bash
 npm run typecheck
-npm test                 # 156 tests: core, components, auth flow, main screens
+npm test                 # 162 tests: core, components, auth flow, main screens
 npm run bundle:check     # headless Hermes bundle for Android
 npm run doctor
 ```
@@ -89,7 +89,7 @@ have not been exercised on hardware. Do that before any pilot.
 
 ## Known gaps
 
-- Photo descriptions can be written when posting, but there is no screen yet to edit one afterwards (the API supports it: `PATCH /photos/:id`). Photos without a description are announced as having none.
+- Photo descriptions can be written when posting and edited later by the author on the post screen. Photos without a description are announced as having none. Not yet checked with a real screen reader.
 - No push notifications; notifications are in-app only.
 - The icon and splash are placeholders, and the package id is a placeholder (see "Building a pilot app").
 - Legal documents are drafts (see `../../legal`); a static site can be built from them but is not hosted anywhere.

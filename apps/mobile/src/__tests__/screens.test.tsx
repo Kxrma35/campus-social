@@ -31,6 +31,7 @@ import AnonymousSettings from "@/app/(app)/settings/anonymous";
 import DataScreen from "@/app/(app)/settings/data";
 import EditProfile from "@/app/(app)/settings/edit-profile";
 import FeedScreen from "@/app/(app)/(tabs)/index";
+import PostScreen from "@/app/(app)/post/[id]";
 import ReportScreen from "@/app/(app)/report";
 import { shareJson } from "@/core/exportFile";
 
@@ -232,6 +233,106 @@ describe("composer photo descriptions", () => {
     });
     await waitFor(() => expect(mockBack).toHaveBeenCalled());
     expect(f.calls.find((c) => c.path === "/posts")!.body).toEqual({ body: "", photoIds: ["up-1"] });
+  });
+});
+
+describe("editing photo descriptions", () => {
+  const photo = (altText: string | null) => ({ id: "ph1", url: "/photos/ph1", width: 10, height: 10, altText });
+  const mineKnown = (altText: string | null) =>
+    post({ id: "post-1", author: author({ profileId: "prof-me" }), photos: [photo(altText)] });
+  const routes = (p: ReturnType<typeof post>, extra: Record<string, { status?: number; body?: unknown }> = {}) => ({
+    "GET /me/profiles": { body: MY_PROFILES_WITH_ANON },
+    "GET /posts/post-1": { body: p },
+    "GET /posts/post-1/comments": { body: { items: [], nextCursor: null } },
+    ...extra,
+  });
+
+  beforeEach(() => {
+    mockParams = { id: "post-1" };
+  });
+
+  it("lets the author add a description and shows it straight away", async () => {
+    const f = mockFetch(routes(mineKnown(null), { "PATCH /photos/ph1": { body: { id: "ph1", altText: "A red bicycle" } } }));
+    await renderApp(<PostScreen />, { fetchImpl: f.impl, identity: true });
+    await fireEvent.press(await screen.findByTestId("open-alt-0"));
+    await fireEvent.changeText(screen.getByTestId("edit-alt-0"), "  A   red bicycle ");
+    await act(async () => {
+      await fireEvent.press(screen.getByTestId("save-alt-0"));
+    });
+    await waitFor(() => expect(f.calls.find((c) => c.method === "PATCH")).toBeTruthy());
+    const sent = f.calls.find((c) => c.method === "PATCH")!;
+    expect(sent.path).toBe("/photos/ph1");
+    expect(sent.body).toEqual({ altText: "A red bicycle" });
+    expect(sent.headers["x-acting-as"]).toBeUndefined();
+    expect(await screen.findByText("A red bicycle")).toBeTruthy();
+    expect(screen.queryByTestId("edit-alt-0")).toBeNull();
+  });
+
+  it("clears a description when the field is emptied", async () => {
+    const f = mockFetch(routes(mineKnown("Old text"), { "PATCH /photos/ph1": { body: { id: "ph1", altText: null } } }));
+    await renderApp(<PostScreen />, { fetchImpl: f.impl, identity: true });
+    await fireEvent.press(await screen.findByTestId("open-alt-0"));
+    expect(screen.getByTestId("edit-alt-0").props.value).toBe("Old text");
+    await fireEvent.changeText(screen.getByTestId("edit-alt-0"), "   ");
+    await act(async () => {
+      await fireEvent.press(screen.getByTestId("save-alt-0"));
+    });
+    await waitFor(() => expect(f.calls.find((c) => c.method === "PATCH")).toBeTruthy());
+    expect(f.calls.find((c) => c.method === "PATCH")!.body).toEqual({ altText: null });
+    expect(await screen.findByText("No description yet.")).toBeTruthy();
+  });
+
+  it("edits an anonymous post as the anonymous profile even while viewing as known", async () => {
+    const anonPost = post({
+      id: "post-1",
+      author: author({ profileId: "prof-anon", kind: "anonymous", handle: "quiet_fox_1234", displayName: null }),
+      photos: [photo(null)],
+    });
+    const f = mockFetch(routes(anonPost, { "PATCH /photos/ph1": { body: { id: "ph1", altText: "A notice board" } } }));
+    await renderApp(<PostScreen />, { fetchImpl: f.impl, identity: true });
+    await fireEvent.press(await screen.findByTestId("open-alt-0"));
+    await fireEvent.changeText(screen.getByTestId("edit-alt-0"), "A notice board");
+    await act(async () => {
+      await fireEvent.press(screen.getByTestId("save-alt-0"));
+    });
+    await waitFor(() => expect(f.calls.find((c) => c.method === "PATCH")).toBeTruthy());
+    expect(f.calls.find((c) => c.method === "PATCH")!.headers["x-acting-as"]).toBe("anonymous");
+  });
+
+  it("does not offer editing on someone else's post", async () => {
+    const theirs = post({ id: "post-1", author: author({ profileId: "someone-else" }), photos: [photo(null)] });
+    const f = mockFetch(routes(theirs));
+    await renderApp(<PostScreen />, { fetchImpl: f.impl, identity: true });
+    await screen.findByText("Comments");
+    expect(screen.queryByTestId("open-alt-0")).toBeNull();
+    expect(screen.queryByText("Photo descriptions")).toBeNull();
+  });
+
+  it("keeps the old description and says why when the server refuses", async () => {
+    const f = mockFetch(
+      routes(mineKnown("Keep me"), { "PATCH /photos/ph1": { status: 403, body: { error: "read_only", message: "x" } } }),
+    );
+    await renderApp(<PostScreen />, { fetchImpl: f.impl, identity: true });
+    await fireEvent.press(await screen.findByTestId("open-alt-0"));
+    await fireEvent.changeText(screen.getByTestId("edit-alt-0"), "Changed");
+    await act(async () => {
+      await fireEvent.press(screen.getByTestId("save-alt-0"));
+    });
+    expect(await screen.findByText(/read-only until you re-verify/)).toBeTruthy();
+    await fireEvent.press(screen.getByText("Cancel"));
+    expect(await screen.findByText("Keep me")).toBeTruthy();
+  });
+
+  it("will not send a description that is too long", async () => {
+    const f = mockFetch(routes(mineKnown(null)));
+    await renderApp(<PostScreen />, { fetchImpl: f.impl, identity: true });
+    await fireEvent.press(await screen.findByTestId("open-alt-0"));
+    await fireEvent(screen.getByTestId("edit-alt-0"), "changeText", "x".repeat(501));
+    await act(async () => {
+      await fireEvent.press(screen.getByTestId("save-alt-0"));
+    });
+    expect(await screen.findByText(/at most 500 characters/)).toBeTruthy();
+    expect(f.calls.some((c) => c.method === "PATCH")).toBe(false);
   });
 });
 

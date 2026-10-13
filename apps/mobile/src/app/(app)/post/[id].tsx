@@ -13,6 +13,7 @@ import { Button } from "@/ui/Button";
 import { CommentItem } from "@/ui/CommentItem";
 import { Loading } from "@/ui/Loading";
 import { Notice } from "@/ui/Notice";
+import { PhotoDescriptions } from "@/ui/PhotoDescriptions";
 import { PostCard } from "@/ui/PostCard";
 import { ProfileChip } from "@/ui/ProfileChip";
 import { Screen } from "@/ui/Screen";
@@ -99,6 +100,16 @@ export default function PostScreen() {
     }
   }
 
+  async function saveDescription(photoId: string, altText: string | null) {
+    if (!post) return;
+    const saved = await api.setPhotoAltText(photoId, altText, post.author.kind);
+    setPost((p) =>
+      p
+        ? { ...p, photos: p.photos.map((x) => (x.id === photoId ? { ...x, altText: saved.altText } : x)) }
+        : p,
+    );
+  }
+
   async function deletePost() {
     try {
       await api.deletePost(id, acting);
@@ -133,6 +144,7 @@ export default function PostScreen() {
         onToggleReaction={reactions.toggle}
         onReport={(p) => router.push({ pathname: "/report", params: { kind: "post", id: p.id } })}
       />
+      {isMine ? <PhotoDescriptions photos={post.photos} onSave={saveDescription} /> : null}
       {isMine ? <Button variant="danger" label="Delete this post" onPress={deletePost} /> : null}
       {reactions.error ? <Notice tone="error">{reactions.error}</Notice> : null}
 
