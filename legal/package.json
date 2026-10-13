@@ -1,0 +1,13 @@
+{
+  "name": "campus-social-legal-site",
+  "private": true,
+  "type": "module",
+  "description": "Builds the public policy pages from the Markdown drafts in this folder.",
+  "scripts": {
+    "build": "node build-site.mjs",
+    "build:release": "node build-site.mjs --release"
+  },
+  "devDependencies": {
+    "marked": "^14.1.4"
+  }
+}

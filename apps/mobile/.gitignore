@@ -1,0 +1,17 @@
+node_modules/
+.expo/
+dist/
+.bundle-check/
+expo-env.d.ts
+web-build/
+# generated native projects (Continuous Native Generation)
+/ios
+/android
+# local environment
+.env*.local
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.tsbuildinfo

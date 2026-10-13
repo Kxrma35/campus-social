@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+*.log
+.expo/
+data/
+legal/site-dist/
+.bundle-check/
+.web-check/
