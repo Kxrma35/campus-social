@@ -1,0 +1,132 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api:
+    name: API (typecheck, unit and database tests)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PG_PASSWORD: ci-only-password
+      TEST_PG_PASSWORD: ci-only-password
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: ci-only-password
+          POSTGRES_DB: campus_social
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d campus_social"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/api/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+      - name: Apply migrations with the deployment script
+        working-directory: .
+        env:
+          OWNER_DATABASE_URL: postgres://postgres:ci-only-password@127.0.0.1:5432/campus_social
+          MIGRATIONS_DIR: db/migrations
+        run: bash deploy/migrate.sh
+      - name: Give the service roles logins
+        working-directory: .
+        env:
+          OWNER_DATABASE_URL: postgres://postgres:ci-only-password@127.0.0.1:5432/campus_social
+          AUTH_SERVICE_PASSWORD: ci-only-password
+          ACCOUNT_LIFECYCLE_PASSWORD: ci-only-password
+          APP_API_PASSWORD: ci-only-password
+          MODERATOR_PASSWORD: ci-only-password
+        run: |
+          bash deploy/set-role-passwords.sh
+          psql "$OWNER_DATABASE_URL" -v ON_ERROR_STOP=1 -c "alter role trust_safety login password 'ci-only-password'"
+      - name: Tests (unit and database)
+        run: npx vitest run
+      - name: Production dependencies have no known vulnerabilities
+        run: npm audit --omit=dev --audit-level=high
+
+  mobile:
+    name: Mobile (typecheck, tests, Android bundle)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test -- --ci
+      - name: Bundle for Android
+        run: npx expo export --platform android --output-dir .bundle-check
+      - name: Release configuration check passes with valid settings
+        env:
+          APP_ENV: preview
+          EXPO_PUBLIC_API_BASE_URL: https://api.example.org
+          EXPO_PUBLIC_LEGAL_BASE_URL: https://legal.example.org
+        run: node scripts/check-release-config.mjs
+
+  legal-site:
+    name: Policy site builds
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: legal
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: legal/package-lock.json
+      - run: npm ci
+      - run: npm run build
+
+  deploy-files:
+    name: Container image and scripts
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Shell scripts parse
+        run: |
+          bash -n deploy/migrate.sh
+          bash -n deploy/set-role-passwords.sh
+      - name: Compose file is valid
+        working-directory: deploy
+        run: |
+          cp env.owner.example .env.owner
+          cp env.api.example .env.api
+          cp env.admin.example .env.admin
+          docker compose --env-file .env.owner --profile admin --profile tools --profile local-db config --quiet
+      - name: API image builds
+        run: docker build -t campus-social-api:ci apps/api
