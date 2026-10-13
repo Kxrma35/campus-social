@@ -47,7 +47,7 @@ export interface PhotoStore {
   delete(key: string): Promise<void>;
 }
 
-const KEY_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.jpg$/;
+export const KEY_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.jpg$/;
 
 export function newPhotoKey(): string {
   return `${randomUUID()}.jpg`;
@@ -82,6 +82,10 @@ export class LocalPhotoStore implements PhotoStore {
   }
 
   private assertKey(key: string): void {
-    if (!KEY_RE.test(key)) throw new Error("invalid photo key");
+    assertPhotoKey(key);
   }
+}
+
+export function assertPhotoKey(key: string): void {
+  if (!KEY_RE.test(key)) throw new Error("invalid photo key");
 }

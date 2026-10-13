@@ -103,7 +103,7 @@ Forward lookup means "this account's anonymous profile". Nothing except the audi
 
 ### 2.3 Recipients
 
-[Hosting provider], [email provider] (one-time codes) and [push provider, when added], all as processors under contract; authorities on a valid legal order. Moderators (staff and trained student moderators) see reported content. No analytics, advertising or tracking SDKs are used by the server code. The email provider receives each recipient's university address and the one-time code in the message body, so it can see the content of every sign-in; it is a processor and needs a contract before launch. Messages are plain text with no links or tracking, and the server never logs addresses or codes. The mobile app now exists; its dependencies (Expo SDK 57 and listed packages) have not been through a formal licence and SDK privacy audit.
+[Hosting provider], [object storage provider] (photos, when not on the same host), [email provider] (one-time codes) and [push provider, when added], all as processors under contract; authorities on a valid legal order. Moderators (staff and trained student moderators) see reported content. No analytics, advertising or tracking SDKs are used by the server code. The email provider receives each recipient's university address and the one-time code in the message body, so it can see the content of every sign-in; it is a processor and needs a contract before launch. Messages are plain text with no links or tracking, and the server never logs addresses or codes. The mobile app now exists; its dependencies (Expo SDK 57 and listed packages) have not been through a formal licence and SDK privacy audit.
 
 ---
 

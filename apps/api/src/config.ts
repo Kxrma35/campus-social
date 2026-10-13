@@ -18,6 +18,20 @@ const schema = z.object({
   LIFECYCLE_DATABASE_URL: z.string().min(1).optional(),
   CONTENT_DATABASE_URL: z.string().min(1).optional(),
   PHOTO_DIR: z.string().default("./data/photos"),
+  PHOTO_STORAGE: z.enum(["local", "s3"]).default("local"),
+  S3_BUCKET: z.string().min(1).optional(),
+  S3_REGION: z.string().min(1).optional(),
+  S3_ENDPOINT: z.string().url().optional(),
+  S3_FORCE_PATH_STYLE: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((v) => v === "true"),
+  S3_ACCESS_KEY_ID: z.string().min(1).optional(),
+  S3_SECRET_ACCESS_KEY: z.string().min(1).optional(),
+  S3_KEY_PREFIX: z
+    .string()
+    .regex(/^([A-Za-z0-9_.-]+\/)*$/, "must be empty or end with a slash")
+    .optional(),
   LINK_ENCRYPTION_KEYS: z.string().min(1).optional(),
   LINK_BLIND_INDEX_KEY: z.string().min(1).optional(),
   ANON_MIN_ACCOUNT_AGE_DAYS: z.coerce.number().int().min(0).default(3),

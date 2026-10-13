@@ -55,7 +55,13 @@ Never commit real values. Generate secrets with `openssl rand -base64 48` (the c
 | `CODE_HMAC_KEY` | required for the API, 32+ characters | Keyed hash for one-time codes. Changing it invalidates codes already issued, nothing else. |
 | `CONTENT_DATABASE_URL` | unset | Connection as `app_api`: posting, feeds, follows, reports. **Without it those routes are not registered.** |
 | `LIFECYCLE_DATABASE_URL` | unset | Connection as `account_lifecycle`: closure, re-verification, export and the maintenance job. **Without it the `/account/*` routes are not registered and `npm run lifecycle` cannot run.** |
-| `PHOTO_DIR` | `./data/photos` | Development photo storage on local disk. The API, the admin service and the maintenance job must all point at the **same** directory. Production storage depends on the hosting decision. |
+| `PHOTO_STORAGE` | `local` | `local` keeps photos in `PHOTO_DIR`; `s3` keeps them in an S3 compatible bucket (AWS S3, Cloudflare R2, MinIO and similar). The API, the admin service and the maintenance job must all use the **same** storage. |
+| `PHOTO_DIR` | `./data/photos` | Used when `PHOTO_STORAGE=local`. Development only: one API instance, and the job must point at the same directory. |
+| `S3_BUCKET`, `S3_REGION` | unset | Required when `PHOTO_STORAGE=s3`. |
+| `S3_ENDPOINT` | unset | Only for non-AWS stores, for example `http://minio:9000`. |
+| `S3_FORCE_PATH_STYLE` | `false` | Set `true` for MinIO and some other stores. |
+| `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | unset | Set both or neither. Neither means the platform's own credential chain (for example an instance role), which is preferable on AWS. |
+| `S3_KEY_PREFIX` | unset | Optional folder inside the bucket. Empty, or ending in `/`. |
 | `TERMS_VERSION` | `draft-0` | Stored with each acceptance. Bump it when the terms change. |
 | `SUPPORT_RESOURCES_JSON` | `[]` | JSON array of `{"name": "...", "contact": "..."}` shown to a student whose post is flagged as a possible crisis. Leave empty until the numbers are confirmed with USIU counselling and a national helpline; nothing is hard-coded. |
 | `DEV_CORS_ORIGIN` | unset | **Development only.** One browser origin allowed to call the API (for the web preview of the app). Refused when `NODE_ENV=production`. |

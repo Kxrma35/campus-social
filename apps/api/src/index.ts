@@ -1,7 +1,7 @@
 import pg from "pg";
 import { AccountService } from "./account/service.js";
 import { AuthActorResolver } from "./content/actor.js";
-import { LocalPhotoStore } from "./content/photos.js";
+import { createPhotoStoreOrExit } from "./content/storage.js";
 import { PgContentStore } from "./content/pgStore.js";
 import { ContentService, DEFAULT_CONTENT_OPTIONS } from "./content/service.js";
 import { buildSupportInfo } from "./moderation/crisis.js";
@@ -18,6 +18,8 @@ import { AuthService } from "./auth/service.js";
 import { loadConfig } from "./config.js";
 
 const config = loadConfig();
+
+const photoStore = createPhotoStoreOrExit(config);
 
 const { DATABASE_URL, CODE_HMAC_KEY } = config;
 if (!DATABASE_URL || !CODE_HMAC_KEY) {
@@ -87,7 +89,7 @@ const content = config.CONTENT_DATABASE_URL
       return {
         service: new ContentService(
           new PgContentStore(contentPool),
-          new LocalPhotoStore(config.PHOTO_DIR),
+          photoStore,
           DEFAULT_CONTENT_OPTIONS,
           () => new Date(),
           {

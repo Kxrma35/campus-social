@@ -1,5 +1,5 @@
 import pg from "pg";
-import { LocalPhotoStore } from "../content/photos.js";
+import { createPhotoStoreOrExit } from "../content/storage.js";
 import { loadConfig } from "../config.js";
 import { BlindIndexer } from "../identity/linkCrypto.js";
 import { buildAdminApp } from "./app.js";
@@ -12,6 +12,8 @@ if (!config.ADMIN_DATABASE_URL) {
   process.exit(1);
 }
 
+const photoStore = createPhotoStoreOrExit(config);
+
 const blind = config.LINK_BLIND_INDEX_KEY ? new BlindIndexer(config.LINK_BLIND_INDEX_KEY) : undefined;
 const pool = new pg.Pool({ connectionString: config.ADMIN_DATABASE_URL, max: 5 });
 const app = buildAdminApp({
@@ -19,7 +21,7 @@ const app = buildAdminApp({
     ...DEFAULT_ADMIN_OPTIONS,
     blindIndexFor: blind ? (id) => blind.indexFor(id) : undefined,
   }),
-  photos: new LocalPhotoStore(config.PHOTO_DIR),
+  photos: photoStore,
 });
 
 app.listen({ port: config.ADMIN_PORT, host: config.HOST }).catch((err) => {

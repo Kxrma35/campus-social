@@ -2,7 +2,7 @@ import pg from "pg";
 import { PgLifecycleStore } from "../account/pgLifecycleStore.js";
 import { runLifecycleSweep } from "../account/lifecycleStore.js";
 import { loadConfig } from "../config.js";
-import { LocalPhotoStore } from "../content/photos.js";
+import { createPhotoStoreOrExit } from "../content/storage.js";
 import { LinkCrypto } from "../identity/linkCrypto.js";
 
 const config = loadConfig();
@@ -35,6 +35,8 @@ const linkCrypto =
     ? new LinkCrypto(config.LINK_ENCRYPTION_KEYS, config.LINK_BLIND_INDEX_KEY)
     : undefined;
 
+const photoStore = createPhotoStoreOrExit(config);
+
 const pool = new pg.Pool({ connectionString: url, max: 2 });
 try {
   const result = await runLifecycleSweep(new PgLifecycleStore(pool, {
@@ -44,7 +46,7 @@ try {
     }),
     opts,
     new Date(),
-    new LocalPhotoStore(config.PHOTO_DIR),
+    photoStore,
   );
   console.log("lifecycle sweep complete:", result);
   if (result.filesFailed > 0) {

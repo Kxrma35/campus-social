@@ -45,9 +45,32 @@ Check the API with `curl http://127.0.0.1:3000/health`.
 ## Before this is a real deployment
 
 - **TLS and a public address are not included.** The API speaks plain HTTP on `127.0.0.1:3000`. Put a reverse proxy or the platform's load balancer in front, terminate TLS there, and forward only `/` to the API. **Never expose the admin port (3100).**
-- **Photos are on a local volume**, so run exactly **one** API instance and back that volume up with the database. Object storage is not implemented.
+- **Photos default to a local volume**, which means exactly **one** API instance, and that volume must be backed up with the database. Set `PHOTO_STORAGE=s3` (below) to remove that limit.
 - **Backups are not included.** Take database backups on a schedule, back up the link keys separately from the database, and run the restore drill in `../ops/KEY_CUSTODY_AND_RESTORE.md`.
 - **Secrets belong in the platform's secret store**, not in files on a disk. The env files are the interface, not the recommendation.
 - **The production API will not start without `SMTP_URL` and `MAIL_FROM`**, because codes must never be printed to a log.
 - **There is no automatic restart or schedule.** `restart` is `"no"` by design; set it per your platform if you want it.
 - **Migrations only move forward.** There is no rollback; restore from backup instead.
+
+## Object storage for photos
+
+Set these in `.env.api`, **and the same storage settings in `.env.admin`** (the admin service reads photos for moderators). The maintenance job uses `.env.api`.
+
+```
+PHOTO_STORAGE=s3
+S3_BUCKET=your-bucket
+S3_REGION=your-region
+S3_ENDPOINT=https://s3.your-region.example.com
+S3_FORCE_PATH_STYLE=true
+S3_ACCESS_KEY_ID=...
+S3_SECRET_ACCESS_KEY=...
+```
+
+Leave `S3_ENDPOINT` and `S3_FORCE_PATH_STYLE` out for AWS S3. Rules for the bucket, all of which matter for the privacy promises:
+
+- **Private.** Block all public access. The API serves photos itself and checks who is asking; the bucket must never be readable directly.
+- **No versioning, or a lifecycle rule that expires old versions.** A versioned bucket keeps a "deleted" photo, which breaks the 30-day deletion promise.
+- **Encryption at rest** on (the default on AWS S3).
+- **Least privilege.** The API needs put, get and delete on the bucket (or prefix). The admin service only needs get. Give each its own credentials.
+- **Region.** It is part of the hosting and transfer decision in `../DECISION_BRIEF.md`.
+- **Moving existing photos.** Switching from `local` to `s3` does not copy files. Copy the photo directory into the bucket first (keys are the file names), or start fresh in a test setup.
