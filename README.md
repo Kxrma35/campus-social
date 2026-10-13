@@ -25,23 +25,115 @@ cd apps/api
 npm install
 npm run typecheck
 npm test            # schema and anonymity checks, no database needed
-cp ../../.env.example ../../.env   # then edit
+# configure first: see Configuration below
 npm run dev         # http://127.0.0.1:3000/health
 ```
 
 Nothing is installed as a background service. Start and stop things yourself.
 
-## Database
+## Configuration
 
-Migrations are plain SQL for PostgreSQL 15+, applied in order. `0001` to `0003` have been applied to PostgreSQL 16 in a throwaway container (2026-10-12), and `0002` and `0003` re-apply cleanly.
+Everything is configured through environment variables. **Nothing loads a `.env` file for you**, so export it into your shell first:
 
 ```bash
-psql "$ADMIN_DATABASE_URL" -f db/migrations/0001_init.sql
-psql "$ADMIN_DATABASE_URL" -f db/migrations/0002_roles.sql
-psql "$ADMIN_DATABASE_URL" -f db/migrations/0003_lifecycle.sql
-psql "$ADMIN_DATABASE_URL" -f db/migrations/0004_content.sql
-psql "$ADMIN_DATABASE_URL" -f db/migrations/0005_moderation.sql
-psql "$ADMIN_DATABASE_URL" -f db/migrations/0006_anonymous.sql
+cp .env.example .env          # then edit; .env is git-ignored
+set -a; . ./.env; set +a      # export every variable in it
+```
+
+Never commit real values. Generate secrets with `openssl rand -base64 48` (the code key) and `openssl rand -base64 32` (the link keys). Settings are validated at start-up, so a missing or malformed value stops the process with a message rather than running half-configured.
+
+**Every process that reads this file (the API, the admin service and the maintenance job) requires `DATABASE_URL` and `CODE_HMAC_KEY` to be set**, even though the admin service and the job do not use them. This is a known wart of sharing one settings schema.
+
+### Core
+
+| Variable | Default | What it does |
+|---|---|---|
+| `NODE_ENV` | `development` | `production` makes the console mailer and `DEV_CORS_ORIGIN` refuse to run. |
+| `PORT` | `3000` | API port. It listens on `127.0.0.1` only; put a reverse proxy in front. |
+| `DATABASE_URL` | required | Connection as the `auth_service` role: sign-in, sessions, appeals. |
+| `CODE_HMAC_KEY` | required, 32+ characters | Keyed hash for one-time codes. Changing it invalidates codes already issued, nothing else. |
+| `CONTENT_DATABASE_URL` | unset | Connection as `app_api`: posting, feeds, follows, reports. **Without it those routes are not registered.** |
+| `LIFECYCLE_DATABASE_URL` | unset | Connection as `account_lifecycle`: closure, re-verification, export and the maintenance job. **Without it the `/account/*` routes are not registered and `npm run lifecycle` cannot run.** |
+| `PHOTO_DIR` | `./data/photos` | Development photo storage on local disk. The API, the admin service and the maintenance job must all point at the **same** directory. Production storage depends on the hosting decision. |
+| `TERMS_VERSION` | `draft-0` | Stored with each acceptance. Bump it when the terms change. |
+| `SUPPORT_RESOURCES_JSON` | `[]` | JSON array of `{"name": "...", "contact": "..."}` shown to a student whose post is flagged as a possible crisis. Leave empty until the numbers are confirmed with USIU counselling and a national helpline; nothing is hard-coded. |
+| `DEV_CORS_ORIGIN` | unset | **Development only.** One browser origin allowed to call the API (for the web preview of the app). Refused when `NODE_ENV=production`. |
+
+### Sign-in codes and sessions
+
+| Variable | Default | What it does |
+|---|---|---|
+| `SMTP_URL` | unset | Outgoing email, for example `smtps://USER:PASS@smtp.example.com:465` or `smtp://USER:PASS@host:587` (STARTTLS, required in production). URL-encode the user and password. **Required in production.** Unset in development, codes are printed in the API log instead. |
+| `MAIL_FROM` | unset | Sender address, for example `Campus Social <no-reply@your-verified-domain>`. Required whenever `SMTP_URL` is set. |
+| `EMAIL_CODE_TTL_MINUTES` | `10` | How long a one-time code is valid. |
+| `MAX_CODES_PER_HOUR` | `5` | Codes one address may request per hour. |
+| `MAX_CODE_ATTEMPTS` | `5` | Wrong guesses allowed against one code before it is locked. |
+| `SESSION_TTL_DAYS` | `30` | Session lifetime. |
+
+### Anonymous profiles and the identity link
+
+| Variable | Default | What it does |
+|---|---|---|
+| `LINK_ENCRYPTION_KEYS` | unset | `version:base64key`, comma separated to rotate (`1:...,2:...`). The highest version encrypts new links; every listed version can still decrypt. |
+| `LINK_BLIND_INDEX_KEY` | unset | Base64 key for the profile-id blind index. Not versioned. The admin service uses this one when it is set, and should **never** be given the encryption key. |
+| `ANON_MIN_ACCOUNT_AGE_DAYS` | `3` | How old an account must be before it can create an anonymous profile. `0` is useful in a test setup. |
+
+**Without both keys, anonymous profiles are disabled** (the routes answer `501`) rather than guessed. Keep the keys in a secret store, never in the database or the repository, and **back them up**: if `LINK_ENCRYPTION_KEYS` is lost, every anonymous link is unrecoverable and closure, export, ban cleanup and unmasking of those profiles stop working. See `ops/KEY_CUSTODY_AND_RESTORE.md` before generating or rotating them.
+
+### Moderation (admin service)
+
+| Variable | Default | What it does |
+|---|---|---|
+| `ADMIN_DATABASE_URL` | required for `npm run admin` | Connection as the `moderator` role. The admin service will not start without it. Nothing in the student API uses it. |
+| `ADMIN_PORT` | `3100` | Admin service port, also bound to `127.0.0.1`. |
+
+### Retention and cleanup (read by `npm run lifecycle`)
+
+The job is manual: nothing runs it for you. The defaults are suggested starting values for counsel to confirm. Start-up refuses values below the minimums shown, and for the moderation record periods the database enforces them as well.
+
+| Variable | Default | Minimum | Meaning |
+|---|---|---|---|
+| `REVERIFY_GRACE_DAYS` | `30` | 1 | Time after the re-verification due date before the account closes. |
+| `PURGE_AFTER_DAYS` | `30` | 1 | A closed account, or content its author deleted, is hard-deleted after this. |
+| `CODE_RETENTION_HOURS` | `24` | 1 | One-time codes older than this are deleted. |
+| `SESSION_RETENTION_DAYS` | `7` | 1 | Expired or revoked sessions older than this are deleted. |
+| `STALE_UPLOAD_HOURS` | `24` | 1 | Photo uploads never attached to a post are deleted (file and row). |
+| `RETENTION_DISMISSED_REPORT_DAYS` | `90` | 30 | Dismissed reports. |
+| `RETENTION_RESOLVED_RECORD_DAYS` | `365` | 180 | Upheld reports, actions, ended suspensions and bans. |
+| `RETENTION_APPEAL_DAYS` | `365` | 180 | Appeal text; the row stays to enforce one appeal per account. |
+| `WARNING_EXPIRY_MONTHS` | `12` | 3 | Warnings stop counting and are deleted. |
+| `AUDIT_LOG_RETENTION_YEARS` | `3` | 1 | Unmask audit log. |
+
+### Used by one command only
+
+These are never set in the API's environment. Give each command its own connection, and use the least powerful login that works.
+
+| Variable | Command | Connection |
+|---|---|---|
+| `TS_DATABASE_URL` | `npm run unmask` | The trust and safety officer's **own** database login, so the audit trail names them. Never a shared account. |
+| `MODERATOR_SETUP_DATABASE_URL` | `npm run moderator -- create\|revoke "<name>"` | The database owner, to write the moderator token table. |
+| `LEGAL_HOLD_DATABASE_URL` | `npm run legal-hold` | The database owner. |
+| `KEY_CHECK_DATABASE_URL` | `npm run verify-keys`, `npm run rotate-keys` | The database owner (it must read every anonymous link in full). Also needs both link keys. |
+
+### The mobile app
+
+Set at build time, not on the server.
+
+| Variable | What it does |
+|---|---|
+| `EXPO_PUBLIC_API_BASE_URL` | Where the app finds the API. Falls back to `http://10.0.2.2:3000` (the Android emulator's route to your computer). Must be `https://` for a release build. |
+| `EXPO_PUBLIC_LEGAL_BASE_URL` | Where the reviewed policy pages are hosted. Unset, the app says the documents are not published yet. |
+
+See `apps/mobile/README.md` for the build profiles and the release check.
+
+## Database
+
+Migrations are plain SQL for PostgreSQL 15+, applied in order (`0001` to `0010`). All ten have been applied to PostgreSQL 16 in a throwaway container and the full test suite run against the result.
+
+```bash
+for f in db/migrations/*.sql; do
+  psql "$ADMIN_DATABASE_URL" -v ON_ERROR_STOP=1 -f "$f"
+done
 ```
 
 Set role passwords and connection strings outside the repo. The services use five logins plus one per trust & safety officer: `auth_service` (sign-in and appeals), `account_lifecycle` (closure, export, sweep), `app_api` (posting, feeds and filing reports, no access to accounts or identity) `moderator` (the separate admin service, no access to accounts, reporters or the identity schema), and `trust_safety` (one named login per officer, only able to call the audited unmask function).
