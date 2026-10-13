@@ -2,12 +2,13 @@ import { z } from "zod";
 
 const schema = z.object({
   PORT: z.coerce.number().default(3000),
+  HOST: z.string().min(1).default("127.0.0.1"),
   DEV_CORS_ORIGIN: z.string().url().optional(),
-  DATABASE_URL: z.string().min(1),
+  DATABASE_URL: z.string().min(1).optional(),
   NODE_ENV: z.string().default("development"),
   SMTP_URL: z.string().url().optional(),
   MAIL_FROM: z.string().min(3).optional(),
-  CODE_HMAC_KEY: z.string().min(32),
+  CODE_HMAC_KEY: z.string().min(32).optional(),
   EMAIL_CODE_TTL_MINUTES: z.coerce.number().int().positive().default(10),
   MAX_CODES_PER_HOUR: z.coerce.number().int().positive().default(5),
   MAX_CODE_ATTEMPTS: z.coerce.number().int().positive().default(5),

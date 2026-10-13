@@ -3,6 +3,12 @@ dist/
 .env
 .env.*
 !.env.example
+.env.admin
+.env.api
+.env.owner
+.env.admin.example
+.env.api.example
+.env.owner.example
 *.log
 .expo/
 data/

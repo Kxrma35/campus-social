@@ -22,7 +22,7 @@ const app = buildAdminApp({
   photos: new LocalPhotoStore(config.PHOTO_DIR),
 });
 
-app.listen({ port: config.ADMIN_PORT, host: "127.0.0.1" }).catch((err) => {
+app.listen({ port: config.ADMIN_PORT, host: config.HOST }).catch((err) => {
   app.log.error(err);
   process.exit(1);
 });

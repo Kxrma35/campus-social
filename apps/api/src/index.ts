@@ -19,9 +19,20 @@ import { loadConfig } from "./config.js";
 
 const config = loadConfig();
 
-if (config.SMTP_URL && !config.MAIL_FROM) {
-  throw new Error("MAIL_FROM is required when SMTP_URL is set");
+const { DATABASE_URL, CODE_HMAC_KEY } = config;
+if (!DATABASE_URL || !CODE_HMAC_KEY) {
+  console.error("DATABASE_URL and CODE_HMAC_KEY are required to run the API.");
+  process.exit(1);
 }
+if (config.SMTP_URL && !config.MAIL_FROM) {
+  console.error("MAIL_FROM is required when SMTP_URL is set.");
+  process.exit(1);
+}
+if (config.NODE_ENV === "production" && !config.SMTP_URL) {
+  console.error("SMTP_URL and MAIL_FROM are required in production: codes cannot be printed to a log.");
+  process.exit(1);
+}
+
 const mailer =
   config.SMTP_URL && config.MAIL_FROM
     ? SmtpMailer.fromUrl(config.SMTP_URL, config.MAIL_FROM, {
@@ -29,9 +40,9 @@ const mailer =
       })
     : new ConsoleMailer(undefined, config.NODE_ENV);
 
-const authStore = new PgAuthStore(new pg.Pool({ connectionString: config.DATABASE_URL, max: 10 }));
+const authStore = new PgAuthStore(new pg.Pool({ connectionString: DATABASE_URL, max: 10 }));
 const auth = new AuthService(authStore, mailer, {
-  codeHmacKey: config.CODE_HMAC_KEY,
+  codeHmacKey: CODE_HMAC_KEY,
   codeTtlMinutes: config.EMAIL_CODE_TTL_MINUTES,
   maxCodesPerHour: config.MAX_CODES_PER_HOUR,
   maxCodeAttempts: config.MAX_CODE_ATTEMPTS,
@@ -120,7 +131,7 @@ if (!content) {
   app.log.warn("CONTENT_DATABASE_URL not set: posting, feed and follow routes are disabled");
 }
 
-app.listen({ port: config.PORT, host: "127.0.0.1" }).catch((err) => {
+app.listen({ port: config.PORT, host: config.HOST }).catch((err) => {
   app.log.error(err);
   process.exit(1);
 });

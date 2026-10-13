@@ -42,16 +42,17 @@ set -a; . ./.env; set +a      # export every variable in it
 
 Never commit real values. Generate secrets with `openssl rand -base64 48` (the code key) and `openssl rand -base64 32` (the link keys). Settings are validated at start-up, so a missing or malformed value stops the process with a message rather than running half-configured.
 
-**Every process that reads this file (the API, the admin service and the maintenance job) requires `DATABASE_URL` and `CODE_HMAC_KEY` to be set**, even though the admin service and the job do not use them. This is a known wart of sharing one settings schema.
+**Different processes need different settings.** The API requires `DATABASE_URL` and `CODE_HMAC_KEY` (it exits with a message if they are missing). The admin service and the maintenance job do not, so they can run without the sign-in settings. For containers, `deploy/` splits these into one env file per privilege level.
 
 ### Core
 
 | Variable | Default | What it does |
 |---|---|---|
 | `NODE_ENV` | `development` | `production` makes the console mailer and `DEV_CORS_ORIGIN` refuse to run. |
-| `PORT` | `3000` | API port. It listens on `127.0.0.1` only; put a reverse proxy in front. |
-| `DATABASE_URL` | required | Connection as the `auth_service` role: sign-in, sessions, appeals. |
-| `CODE_HMAC_KEY` | required, 32+ characters | Keyed hash for one-time codes. Changing it invalidates codes already issued, nothing else. |
+| `PORT` | `3000` | API port. |
+| `HOST` | `127.0.0.1` | Address to listen on, for the API and the admin service. The container image sets `0.0.0.0`; keep loopback anywhere else and put a reverse proxy with TLS in front. |
+| `DATABASE_URL` | required for the API | Connection as the `auth_service` role: sign-in, sessions, appeals. |
+| `CODE_HMAC_KEY` | required for the API, 32+ characters | Keyed hash for one-time codes. Changing it invalidates codes already issued, nothing else. |
 | `CONTENT_DATABASE_URL` | unset | Connection as `app_api`: posting, feeds, follows, reports. **Without it those routes are not registered.** |
 | `LIFECYCLE_DATABASE_URL` | unset | Connection as `account_lifecycle`: closure, re-verification, export and the maintenance job. **Without it the `/account/*` routes are not registered and `npm run lifecycle` cannot run.** |
 | `PHOTO_DIR` | `./data/photos` | Development photo storage on local disk. The API, the admin service and the maintenance job must all point at the **same** directory. Production storage depends on the hosting decision. |
@@ -63,7 +64,7 @@ Never commit real values. Generate secrets with `openssl rand -base64 48` (the c
 
 | Variable | Default | What it does |
 |---|---|---|
-| `SMTP_URL` | unset | Outgoing email, for example `smtps://USER:PASS@smtp.example.com:465` or `smtp://USER:PASS@host:587` (STARTTLS, required in production). URL-encode the user and password. **Required in production.** Unset in development, codes are printed in the API log instead. |
+| `SMTP_URL` | unset | Outgoing email, for example `smtps://USER:PASS@smtp.example.com:465` or `smtp://USER:PASS@host:587` (STARTTLS, required in production). URL-encode the user and password. **Required in production: the API refuses to start without it.** Unset in development, codes are printed in the API log instead. |
 | `MAIL_FROM` | unset | Sender address, for example `Campus Social <no-reply@your-verified-domain>`. Required whenever `SMTP_URL` is set. |
 | `EMAIL_CODE_TTL_MINUTES` | `10` | How long a one-time code is valid. |
 | `MAX_CODES_PER_HOUR` | `5` | Codes one address may request per hour. |
@@ -125,6 +126,10 @@ Set at build time, not on the server.
 | `EXPO_PUBLIC_LEGAL_BASE_URL` | Where the reviewed policy pages are hosted. Unset, the app says the documents are not published yet. |
 
 See `apps/mobile/README.md` for the build profiles and the release check.
+
+## Deployment
+
+`deploy/` has a Dockerfile, a compose file with on-demand profiles, a migration runner, and env templates split by privilege. See `deploy/README.md` for the first-run steps and for what is deliberately not included (TLS, backups, object storage).
 
 ## Database
 

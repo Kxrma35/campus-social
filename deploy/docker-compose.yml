@@ -1,0 +1,74 @@
+name: campus-social
+
+x-api: &api
+  image: campus-social-api:local
+  build:
+    context: ../apps/api
+  env_file: .env.api
+  environment:
+    PHOTO_DIR: /data/photos
+  volumes:
+    - photos:/data/photos
+  restart: "no"
+
+services:
+  db:
+    image: postgres:16
+    profiles: ["local-db"]
+    environment:
+      POSTGRES_DB: campus_social
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d campus_social"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: "no"
+
+  api:
+    <<: *api
+    ports:
+      - "127.0.0.1:3000:3000"
+
+  admin:
+    <<: *api
+    profiles: ["admin"]
+    env_file: .env.admin
+    command: ["node", "dist/admin/index.js"]
+    ports:
+      - "127.0.0.1:3100:3100"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:'+process.env.ADMIN_PORT+'/health').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+  lifecycle:
+    <<: *api
+    profiles: ["tools"]
+    command: ["node", "dist/scripts/lifecycle.js"]
+
+  migrate:
+    image: postgres:16
+    profiles: ["tools"]
+    env_file: .env.owner
+    volumes:
+      - ./migrate.sh:/deploy/migrate.sh:ro
+      - ../db/migrations:/migrations:ro
+    command: ["bash", "/deploy/migrate.sh"]
+
+  set-role-passwords:
+    image: postgres:16
+    profiles: ["tools"]
+    env_file: .env.owner
+    volumes:
+      - ./set-role-passwords.sh:/deploy/set-role-passwords.sh:ro
+    command: ["bash", "/deploy/set-role-passwords.sh"]
+
+volumes:
+  pgdata:
+  photos:
