@@ -22,7 +22,7 @@ app says the documents are not available yet rather than showing drafts as final
 
 ```bash
 npm run typecheck
-npm test                 # 169 tests: core, components, auth flow, main screens
+npm test                 # 172 tests: core, components, auth flow, main screens
 npm run bundle:check     # headless Hermes bundle for Android
 npm run doctor
 ```
@@ -98,7 +98,7 @@ have not been exercised on hardware. Do that before any pilot.
 
 ## Privacy behaviour worth knowing
 
-- Only the session token is stored on the device (SecureStore). No analytics or ad SDKs.
+- Only the session token is stored on the device (SecureStore). During sign in, the email address and one-time code are held in memory only and are never put in a screen address or route parameter; if the page is reloaded mid sign in, the app says so and starts again. No analytics or ad SDKs.
 - The composer always starts as the known profile; posting anonymously needs an explicit switch
   and a confirmation when the server asks for it.
 - Anonymous post times are shown rounded ("this hour") because the server rounds them.

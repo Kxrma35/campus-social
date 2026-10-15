@@ -1,9 +1,11 @@
 import { Stack } from "expo-router";
+import { AuthFlowProvider } from "@/core/authFlow";
 import { useTheme } from "@/ui/theme";
 
 export default function AuthLayout() {
   const t = useTheme();
   return (
+    <AuthFlowProvider>
     <Stack
       screenOptions={{
         headerShown: true,
@@ -18,5 +20,6 @@ export default function AuthLayout() {
       <Stack.Screen name="code" options={{ title: "Enter your code" }} />
       <Stack.Screen name="details" options={{ title: "About you" }} />
     </Stack>
+    </AuthFlowProvider>
   );
 }

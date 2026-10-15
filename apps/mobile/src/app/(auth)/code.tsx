@@ -1,15 +1,19 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
+import { useAuthFlow } from "@/core/authFlow";
 import { describeError } from "@/core/lib/errors";
 import { checkCode } from "@/core/lib/validation";
 import { useSession } from "@/core/session/SessionProvider";
 import { Button } from "@/ui/Button";
+import { Notice } from "@/ui/Notice";
 import { Screen } from "@/ui/Screen";
 import { Text } from "@/ui/Text";
 import { TextField } from "@/ui/TextField";
 
 export default function CodeScreen() {
-  const { mode, email = "" } = useLocalSearchParams<{ mode?: string; email?: string }>();
+  const { mode } = useLocalSearchParams<{ mode?: string }>();
+  const flow = useAuthFlow();
+  const email = flow.email;
   const signup = mode !== "login";
   const { api, signIn } = useSession();
   const [code, setCode] = useState("");
@@ -26,7 +30,8 @@ export default function CodeScreen() {
     setError(null);
 
     if (signup) {
-      router.push({ pathname: "/details", params: { email, code: checked.value } });
+      flow.setCode(checked.value);
+      router.push({ pathname: "/details", params: { mode: "signup" } });
       return;
     }
 
@@ -50,6 +55,18 @@ export default function CodeScreen() {
     } catch (e) {
       setError(describeError(e));
     }
+  }
+
+  if (!email) {
+    return (
+      <Screen>
+        <Notice title="Let's start again">
+          Your sign in was interrupted, for example by reloading the page. Enter your email address
+          again to get a new code.
+        </Notice>
+        <Button label="Start again" onPress={() => router.replace("/welcome")} testID="start-again" />
+      </Screen>
+    );
   }
 
   return (

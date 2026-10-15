@@ -1,5 +1,6 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
+import { useAuthFlow } from "@/core/authFlow";
 import { describeError } from "@/core/lib/errors";
 import { checkEmail } from "@/core/lib/validation";
 import { useApi } from "@/core/session/SessionProvider";
@@ -13,6 +14,7 @@ export default function EmailScreen() {
   const { mode } = useLocalSearchParams<{ mode?: string }>();
   const signup = mode !== "login";
   const api = useApi();
+  const flow = useAuthFlow();
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -28,7 +30,8 @@ export default function EmailScreen() {
     try {
       if (signup) await api.requestSignupCode(checked.value);
       else await api.requestLoginCode(checked.value);
-      router.push({ pathname: "/code", params: { mode: signup ? "signup" : "login", email: checked.value } });
+      flow.setEmail(checked.value);
+      router.push({ pathname: "/code", params: { mode: signup ? "signup" : "login" } });
     } catch (e) {
       setError(describeError(e));
     } finally {

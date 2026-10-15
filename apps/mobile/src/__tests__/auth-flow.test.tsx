@@ -20,6 +20,8 @@ import EmailScreen from "@/app/(auth)/email";
 import CodeScreen from "@/app/(auth)/code";
 import DetailsScreen from "@/app/(auth)/details";
 
+const FLOW = { email: "jane@usiu.ac.ke", code: "123456" };
+
 const SESSION = {
   sessionToken: "tok_new",
   expiresAt: "2027-01-01T00:00:00Z",
@@ -59,8 +61,9 @@ describe("email screen", () => {
     expect(f.calls[0]).toMatchObject({ method: "POST", path: "/auth/signup/request", body: { email: "jane@usiu.ac.ke" } });
     expect(mockPush).toHaveBeenCalledWith({
       pathname: "/code",
-      params: { mode: "signup", email: "jane@usiu.ac.ke" },
+      params: { mode: "signup" },
     });
+    expect(JSON.stringify(mockPush.mock.calls)).not.toContain("jane");
   });
 
   it("uses the sign-in endpoint in sign-in mode", async () => {
@@ -102,9 +105,9 @@ describe("email screen", () => {
 
 describe("code screen", () => {
   it("signs in with a login code", async () => {
-    mockParams = { mode: "login", email: "jane@usiu.ac.ke" };
+    mockParams = { mode: "login" };
     const f = mockFetch({ "POST /auth/login/verify": { status: 200, body: SESSION } });
-    await renderApp(<CodeScreen />, { fetchImpl: f.impl, token: null });
+    await renderApp(<CodeScreen />, { fetchImpl: f.impl, token: null, authFlow: { email: "jane@usiu.ac.ke" } });
 
     await fireEvent.changeText(screen.getByTestId("code-input"), "123 456");
     await act(async () => {
@@ -119,9 +122,9 @@ describe("code screen", () => {
   });
 
   it("does not spend a sign-up code until the details are in", async () => {
-    mockParams = { mode: "signup", email: "jane@usiu.ac.ke" };
+    mockParams = { mode: "signup" };
     const f = mockFetch({});
-    await renderApp(<CodeScreen />, { fetchImpl: f.impl, token: null });
+    await renderApp(<CodeScreen />, { fetchImpl: f.impl, token: null, authFlow: { email: "jane@usiu.ac.ke" } });
 
     await fireEvent.changeText(screen.getByTestId("code-input"), "123456");
     await fireEvent.press(screen.getByTestId("submit-code"));
@@ -130,14 +133,25 @@ describe("code screen", () => {
     expect(f.calls).toHaveLength(0);
     expect(mockPush).toHaveBeenCalledWith({
       pathname: "/details",
-      params: { email: "jane@usiu.ac.ke", code: "123456" },
+      params: { mode: "signup" },
     });
+    const pushed = JSON.stringify(mockPush.mock.calls);
+    expect(pushed).not.toContain("jane");
+    expect(pushed).not.toContain("123456");
+  });
+
+  it("offers a fresh start when the page was reloaded and the email is gone", async () => {
+    mockParams = { mode: "login" };
+    await renderApp(<CodeScreen />, { fetchImpl: mockFetch({}).impl, token: null });
+    expect(screen.getByText("Let's start again")).toBeTruthy();
+    expect(screen.queryByTestId("code-input")).toBeNull();
+    await fireEvent.press(screen.getByTestId("start-again"));
   });
 
   it("rejects a malformed code without calling the server", async () => {
-    mockParams = { mode: "login", email: "jane@usiu.ac.ke" };
+    mockParams = { mode: "login" };
     const f = mockFetch({});
-    await renderApp(<CodeScreen />, { fetchImpl: f.impl, token: null });
+    await renderApp(<CodeScreen />, { fetchImpl: f.impl, token: null, authFlow: { email: "jane@usiu.ac.ke" } });
     await fireEvent.changeText(screen.getByTestId("code-input"), "12ab");
     await fireEvent.press(screen.getByTestId("submit-code"));
     expect(await screen.findByText("Enter the 6-digit code from your email.")).toBeTruthy();
@@ -145,11 +159,11 @@ describe("code screen", () => {
   });
 
   it("explains a wrong code", async () => {
-    mockParams = { mode: "login", email: "jane@usiu.ac.ke" };
+    mockParams = { mode: "login" };
     const f = mockFetch({
       "POST /auth/login/verify": { status: 400, body: { error: "invalid_code", message: "x" } },
     });
-    await renderApp(<CodeScreen />, { fetchImpl: f.impl, token: null });
+    await renderApp(<CodeScreen />, { fetchImpl: f.impl, token: null, authFlow: { email: "jane@usiu.ac.ke" } });
     await fireEvent.changeText(screen.getByTestId("code-input"), "000000");
     await fireEvent.press(screen.getByTestId("submit-code"));
     expect(await screen.findByText(/That code is not right/)).toBeTruthy();
@@ -167,18 +181,32 @@ describe("sign-up details screen (consent)", () => {
   };
 
   beforeEach(() => {
-    mockParams = { email: "jane@usiu.ac.ke", code: "123456" };
+    mockParams = {};
+  });
+
+  it("offers a fresh start when the email or code is no longer in memory", async () => {
+    await renderApp(<DetailsScreen />, {
+      fetchImpl: mockFetch({}).impl,
+      token: null,
+      authFlow: { email: "jane@usiu.ac.ke" },
+    });
+    expect(screen.getByText("Let's start again")).toBeTruthy();
+    expect(screen.queryByTestId("create-account")).toBeNull();
   });
 
   it("starts with both consent boxes unticked", async () => {
-    await renderApp(<DetailsScreen />, { fetchImpl: mockFetch({}).impl, token: null });
+    await renderApp(<DetailsScreen />, {
+      fetchImpl: mockFetch({}).impl,
+      token: null,
+      authFlow: FLOW,
+    });
     expect(screen.getByTestId("over18").props.accessibilityState.checked).toBe(false);
     expect(screen.getByTestId("accept-terms").props.accessibilityState.checked).toBe(false);
   });
 
   it("sends nothing and names what is missing when consent has not been given", async () => {
     const f = mockFetch({});
-    await renderApp(<DetailsScreen />, { fetchImpl: f.impl, token: null });
+    await renderApp(<DetailsScreen />, { fetchImpl: f.impl, token: null, authFlow: FLOW });
     await fill();
     await fireEvent.press(screen.getByTestId("create-account"));
 
@@ -189,7 +217,7 @@ describe("sign-up details screen (consent)", () => {
 
   it("does not accept the terms by ticking only the age box", async () => {
     const f = mockFetch({});
-    await renderApp(<DetailsScreen />, { fetchImpl: f.impl, token: null });
+    await renderApp(<DetailsScreen />, { fetchImpl: f.impl, token: null, authFlow: FLOW });
     await fill();
     await fireEvent.press(screen.getByTestId("over18"));
     await fireEvent.press(screen.getByTestId("create-account"));
@@ -199,7 +227,7 @@ describe("sign-up details screen (consent)", () => {
 
   it("blocks someone whose date of birth makes them under 18, before any request", async () => {
     const f = mockFetch({});
-    await renderApp(<DetailsScreen />, { fetchImpl: f.impl, token: null });
+    await renderApp(<DetailsScreen />, { fetchImpl: f.impl, token: null, authFlow: FLOW });
     await fill();
     await fireEvent.changeText(screen.getByTestId("dob-year"), "2012");
     await fireEvent.press(screen.getByTestId("over18"));
@@ -212,7 +240,7 @@ describe("sign-up details screen (consent)", () => {
 
   it("rejects an impossible date", async () => {
     const f = mockFetch({});
-    await renderApp(<DetailsScreen />, { fetchImpl: f.impl, token: null });
+    await renderApp(<DetailsScreen />, { fetchImpl: f.impl, token: null, authFlow: FLOW });
     await fill();
     await fireEvent.changeText(screen.getByTestId("dob-day"), "31");
     await fireEvent.changeText(screen.getByTestId("dob-month"), "2");
@@ -225,7 +253,7 @@ describe("sign-up details screen (consent)", () => {
 
   it("creates the account with explicit consent and a cleaned-up profile", async () => {
     const f = mockFetch({ "POST /auth/signup/verify": { status: 201, body: SESSION } });
-    await renderApp(<DetailsScreen />, { fetchImpl: f.impl, token: null });
+    await renderApp(<DetailsScreen />, { fetchImpl: f.impl, token: null, authFlow: FLOW });
     await fill();
     await fireEvent.press(screen.getByTestId("over18"));
     await fireEvent.press(screen.getByTestId("accept-terms"));
@@ -251,7 +279,7 @@ describe("sign-up details screen (consent)", () => {
     const f = mockFetch({
       "POST /auth/signup/verify": { status: 400, body: { error: "code_expired", message: "x" } },
     });
-    await renderApp(<DetailsScreen />, { fetchImpl: f.impl, token: null });
+    await renderApp(<DetailsScreen />, { fetchImpl: f.impl, token: null, authFlow: FLOW });
     await fill();
     await fireEvent.press(screen.getByTestId("over18"));
     await fireEvent.press(screen.getByTestId("accept-terms"));

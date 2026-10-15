@@ -1,7 +1,8 @@
-import { router, useLocalSearchParams } from "expo-router";
+import { router } from "expo-router";
 import { useState } from "react";
 import { View } from "react-native";
 import type { SignupInput } from "@/core/api/types";
+import { useAuthFlow } from "@/core/authFlow";
 import { legalBaseUrl } from "@/core/config";
 import { describeError, isCode } from "@/core/lib/errors";
 import {
@@ -24,7 +25,7 @@ import { TextField } from "@/ui/TextField";
 type FieldErrors = Partial<Record<"name" | "course" | "year" | "dob" | "age" | "terms", string>>;
 
 export default function DetailsScreen() {
-  const { email = "", code = "" } = useLocalSearchParams<{ email?: string; code?: string }>();
+  const { email, code } = useAuthFlow();
   const { api, signIn } = useSession();
 
   const [name, setName] = useState("");
@@ -83,6 +84,18 @@ export default function DetailsScreen() {
     } finally {
       setBusy(false);
     }
+  }
+
+  if (!email || !code) {
+    return (
+      <Screen>
+        <Notice title="Let's start again">
+          Your sign up was interrupted, for example by reloading the page. Enter your email address
+          again to get a new code.
+        </Notice>
+        <Button label="Start again" onPress={() => router.replace("/welcome")} testID="start-again" />
+      </Screen>
+    );
   }
 
   return (

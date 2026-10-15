@@ -1,5 +1,6 @@
 import { render } from "@testing-library/react-native";
 import type { ReactElement } from "react";
+import { AuthFlowProvider } from "@/core/authFlow";
 import { IdentityProvider } from "@/core/session/IdentityProvider";
 import { SessionProvider } from "@/core/session/SessionProvider";
 import type { TokenStore } from "@/core/session/tokenStore";
@@ -43,7 +44,13 @@ export function mockFetch(routes: Record<string, { status?: number; body?: unkno
 
 export async function renderApp(
   ui: ReactElement,
-  opts: { fetchImpl?: typeof fetch; token?: string | null; scheme?: "light" | "dark"; identity?: boolean } = {},
+  opts: {
+    fetchImpl?: typeof fetch;
+    token?: string | null;
+    scheme?: "light" | "dark";
+    identity?: boolean;
+    authFlow?: { email?: string; code?: string };
+  } = {},
 ) {
   return render(
     <ThemeProvider scheme={opts.scheme ?? "light"}>
@@ -52,7 +59,9 @@ export async function renderApp(
         baseUrl="https://api.test"
         fetchImpl={opts.fetchImpl ?? (jest.fn() as never)}
       >
-        {opts.identity ? <IdentityProvider>{ui}</IdentityProvider> : ui}
+        <AuthFlowProvider initial={opts.authFlow}>
+          {opts.identity ? <IdentityProvider>{ui}</IdentityProvider> : ui}
+        </AuthFlowProvider>
       </SessionProvider>
     </ThemeProvider>,
   );
