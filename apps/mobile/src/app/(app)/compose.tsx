@@ -10,9 +10,9 @@ import type { PickedPhoto } from "@/core/photos";
 import { useIdentity } from "@/core/session/IdentityProvider";
 import { useSession } from "@/core/session/SessionProvider";
 import { radius, spacing } from "@/theme/tokens";
-import { Avatar } from "@/ui/Avatar";
 import { Button } from "@/ui/Button";
 import { Notice } from "@/ui/Notice";
+import { PostingAsSwitch } from "@/ui/PostingAsSwitch";
 import { ProfileChip } from "@/ui/ProfileChip";
 import { Screen } from "@/ui/Screen";
 import { SupportPanel } from "@/ui/SupportPanel";
@@ -34,10 +34,26 @@ export default function ComposeScreen() {
   const [error, setError] = useState<string | null>(null);
   const [needsConfirm, setNeedsConfirm] = useState(false);
   const [posted, setPosted] = useState<Post | null>(null);
+  const [pendingSwitch, setPendingSwitch] = useState<ProfileKind | null>(null);
 
   const anonymous = as === "anonymous";
   const handle = profiles?.anonymous?.handle;
   const accent = anonymous ? t.anonymous : t.known;
+
+  function applySwitch(next: ProfileKind) {
+    setAs(next);
+    setNeedsConfirm(false);
+    setPhotos([]);
+    setAlts({});
+    setPendingSwitch(null);
+  }
+
+  function choose(next: ProfileKind) {
+    if (next === as) return;
+    // Photos were prepared under the current profile, so ask before dropping them.
+    if (photos.length > 0) setPendingSwitch(next);
+    else applySwitch(next);
+  }
 
   async function send(confirmed: boolean) {
     const text = body.trim();
@@ -103,12 +119,6 @@ export default function ComposeScreen() {
   return (
     <Screen>
       <View
-        accessible
-        accessibilityLabel={
-          anonymous
-            ? `You are posting anonymously as ${handle ?? "your anonymous profile"}`
-            : "You are posting as yourself, with your name"
-        }
         style={{
           borderBottomWidth: 3,
           borderBottomColor: accent,
@@ -116,31 +126,55 @@ export default function ComposeScreen() {
           gap: spacing.md,
         }}
       >
-        <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
-          <Avatar kind={as} name={anonymous ? handle : profiles?.known?.handle} size="lg" />
-          <View style={{ flex: 1, gap: spacing.xs }}>
-            <ProfileChip kind={as} self prefix="Posting as" />
-            <Text variant="small" tone="muted">
-              {anonymous
-                ? `Other students will see only ${handle ? "@" + handle : "your generated handle"}, not your name.`
-                : "Other students at your campus will see your name."}
-            </Text>
-          </View>
-        </View>
         {canUseAnonymous ? (
-          <Button
-            variant="secondary"
-            label={anonymous ? "Post as yourself instead" : "Post anonymously instead"}
-            onPress={() => {
-              setAs(anonymous ? "known" : "anonymous");
-              setNeedsConfirm(false);
-              setPhotos([]);
-              setAlts({});
-            }}
-            testID="switch-profile"
+          <PostingAsSwitch
+            value={as}
+            onChange={choose}
+            knownHandle={profiles?.known?.handle}
+            anonymousHandle={handle}
           />
         ) : null}
+        <View
+          accessible
+          accessibilityLiveRegion="polite"
+          accessibilityLabel={
+            anonymous
+              ? `You are posting anonymously as ${handle ?? "your anonymous profile"}`
+              : "You are posting as yourself, with your name"
+          }
+          style={{ gap: spacing.xs }}
+        >
+          <ProfileChip kind={as} self prefix="Posting as" />
+          <Text variant="small" tone="muted">
+            {anonymous
+              ? `Other students will see only ${handle ? "@" + handle : "your generated handle"}, not your name.`
+              : "Other students at your campus will see your name."}
+          </Text>
+        </View>
       </View>
+
+      {pendingSwitch ? (
+        <Notice title="Switch profile?">
+          <Text>
+            {`Photos you added are tied to the profile you chose them for. Switching to ${
+              pendingSwitch === "anonymous" ? "your anonymous profile" : "your known profile"
+            } removes ${photos.length === 1 ? "that photo" : `those ${photos.length} photos`}. You can add them again afterwards.`}
+          </Text>
+          <View style={{ gap: spacing.sm, marginTop: spacing.sm }}>
+            <Button
+              label="Switch and remove photos"
+              onPress={() => applySwitch(pendingSwitch)}
+              testID="confirm-switch"
+            />
+            <Button
+              variant="secondary"
+              label="Keep my photos"
+              onPress={() => setPendingSwitch(null)}
+              testID="cancel-switch"
+            />
+          </View>
+        </Notice>
+      ) : null}
 
       <TextField
         label="What do you want to say?"

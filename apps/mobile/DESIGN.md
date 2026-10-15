@@ -126,3 +126,10 @@ The feed follows the sign-in language: calm, tinted ground, Figtree, near-black 
 - States: a static skeleton while the first page loads (nothing animates), an empty state with the logomark and a plain sentence, an error notice with Try again.
 - Wide screens: header, prompt, tabs and posts share one centred 640pt column.
 - Not built: the two-disc posting-as switch in the composer, and haptics on like.
+
+## Composer (2026-10-15)
+
+- Posting-as switch: a radio group of two options, "You" and "Anonymous", each a rounded-square avatar (initial or the two-circle mark), a title, a short plain line ("Your name is shown", "Hidden from other students") and a radio dot. The selected option has a 2px border in its identity colour, a soft fill and a filled dot, so selection never rests on colour alone. Targets are at least 64pt tall. Shown only when the student has an anonymous profile, and the composer always opens on the known profile so anonymous posting stays a deliberate act.
+- Below it, the `ProfileChip` "Posting as you" or "Posting as anonymous" and one sentence on what other students will see, announced politely when it changes. A 3px rule in the identity colour sits under the group.
+- Switching with photos attached asks first: the photos were prepared under the current profile and are removed on switching, with "Switch and remove photos" and "Keep my photos". Without photos the switch is immediate.
+- Unchanged: the first-few-times anonymity confirmation, photo descriptions, the character count under the field, and the support panel after a flagged post.

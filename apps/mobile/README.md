@@ -22,7 +22,7 @@ app says the documents are not available yet rather than showing drafts as final
 
 ```bash
 npm run typecheck
-npm test                 # 222 tests: core, components, auth flow, main screens
+npm test                 # 228 tests: core, components, auth flow, main screens
 npm run bundle:check     # headless Hermes bundle for Android
 npm run doctor
 ```

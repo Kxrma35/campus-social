@@ -59,7 +59,7 @@ describe("composer", () => {
     const f = mockFetch({ "GET /me/profiles": { body: MY_PROFILES_NO_ANON } });
     await renderApp(<ComposeScreen />, { fetchImpl: f.impl, identity: true });
     expect(await screen.findByText("Posting as you")).toBeTruthy();
-    expect(screen.queryByTestId("switch-profile")).toBeNull();
+    expect(screen.queryByTestId("as-anonymous")).toBeNull();
     expect(screen.getByText(/will see your name/)).toBeTruthy();
   });
 
@@ -113,7 +113,7 @@ describe("composer", () => {
     }) as unknown as typeof fetch;
 
     await renderApp(<ComposeScreen />, { fetchImpl: impl, identity: true });
-    await fireEvent.press(await screen.findByTestId("switch-profile"));
+    await fireEvent.press(await screen.findByTestId("as-anonymous"));
 
     expect(await screen.findByText("Posting as anonymous")).toBeTruthy();
     expect(screen.getByText(/only @quiet_fox_1234, not your name/)).toBeTruthy();
