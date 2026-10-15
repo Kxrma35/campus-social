@@ -33,7 +33,13 @@ export function CommentItem({
   const heart = comment.viewerReacted ? t.primary : t.textMuted;
   return (
     <View style={[styles.box, { borderBottomColor: t.hairline }]}>
-      <Avatar kind={comment.author.kind} name={comment.author.displayName ?? comment.author.handle} size="sm" />
+      <Avatar
+        kind={comment.author.kind}
+        name={comment.author.displayName ?? comment.author.handle}
+        size="sm"
+        profileId={comment.author.profileId}
+        hasAvatar={comment.author.hasAvatar}
+      />
       <View style={styles.main}>
         <View style={styles.row}>
           <Text variant="label">{title}</Text>

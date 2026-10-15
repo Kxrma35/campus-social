@@ -200,6 +200,10 @@ export function createApiClient(opts: ApiClientOptions) {
         actingAs,
       }),
 
+    setAvatar: (photoId: string) =>
+      request<{ ok: true }>("PUT", "/me/avatar", { body: { photoId } }),
+    removeAvatar: () => request<{ ok: true }>("DELETE", "/me/avatar"),
+
     setPhotoAltText: (id: string, altText: string | null, actingAs?: ProfileKind) =>
       request<{ id: string; altText: string | null }>("PATCH", idPath("/photos", id), {
         body: { altText },

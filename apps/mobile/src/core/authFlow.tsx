@@ -28,14 +28,14 @@ export function AuthFlowProvider({
   initial,
 }: {
   children: ReactNode;
-  initial?: { email?: string; code?: string; dateOfBirth?: string };
+  initial?: { email?: string; code?: string; dateOfBirth?: string; pendingSession?: SessionResponse };
 }) {
   const [email, setEmail] = useState(initial?.email ?? "");
   const [code, setCode] = useState(initial?.code ?? "");
   const [codeSentAt, setCodeSentAt] = useState<number | null>(null);
   const [dateOfBirth, setDateOfBirth] = useState(initial?.dateOfBirth ?? "");
   const [notice, setNotice] = useState<string | null>(null);
-  const [pendingSession, setPendingSession] = useState<SessionResponse | null>(null);
+  const [pendingSession, setPendingSession] = useState<SessionResponse | null>(initial?.pendingSession ?? null);
 
   const value = useMemo<AuthFlow>(
     () => ({

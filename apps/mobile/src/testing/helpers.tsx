@@ -49,7 +49,12 @@ export async function renderApp(
     token?: string | null;
     scheme?: "light" | "dark";
     identity?: boolean;
-    authFlow?: { email?: string; code?: string; dateOfBirth?: string };
+    authFlow?: {
+      email?: string;
+      code?: string;
+      dateOfBirth?: string;
+      pendingSession?: import("@/core/api/types").SessionResponse;
+    };
   } = {},
 ) {
   return render(
@@ -72,6 +77,7 @@ export const author = (over: Partial<import("@/core/api/types").Author> = {}) =>
   kind: "known" as const,
   handle: "jane_doe_4821",
   displayName: "Jane Doe",
+  hasAvatar: false,
   ...over,
 });
 

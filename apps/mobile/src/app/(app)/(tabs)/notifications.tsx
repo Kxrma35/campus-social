@@ -78,7 +78,13 @@ export default function NotificationsScreen() {
               { borderColor: t.hairline, backgroundColor: pressed ? t.primarySoft : t.card },
             ]}
           >
-            <Avatar kind={item.actor.kind} name={item.actor.displayName ?? item.actor.handle} size="md" />
+            <Avatar
+              kind={item.actor.kind}
+              name={item.actor.displayName ?? item.actor.handle}
+              size="md"
+              profileId={item.actor.profileId}
+              hasAvatar={item.actor.hasAvatar}
+            />
             <View style={styles.text}>
               <Text variant="body" style={item.read ? undefined : { fontWeight: "700" }}>
                 {text}

@@ -7,6 +7,8 @@ export interface Author {
   handle: string;
   /** Real name; always null for anonymous profiles. */
   displayName: string | null;
+  /** A known profile has a photo other students may see. Never true for anonymous. */
+  hasAvatar: boolean;
 }
 
 export interface PostPhoto {
@@ -60,6 +62,7 @@ export interface Profile {
   followingCount: number;
   viewerFollows: boolean;
   isSelf: boolean;
+  hasAvatar: boolean;
 }
 
 export type NotificationKind = "comment" | "reaction" | "follow";
@@ -109,6 +112,7 @@ export interface KnownProfileDetails {
   displayName: string;
   course: string | null;
   studyYear: number | null;
+  hasAvatar: boolean;
 }
 
 export type ReportReason =

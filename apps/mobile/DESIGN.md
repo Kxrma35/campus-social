@@ -173,3 +173,10 @@ One `EmptyState` component: the logomark, a heading, one plain sentence and, whe
 - Profile: your own empty profile says "You have not posted yet" with Write a post; someone else's says "No posts yet" with no button.
 - Post comments: compact, "No comments yet. Be the first to reply."
 - Errors and loading are separate: errors keep a notice with Try again, loading uses the static skeleton.
+
+## Profile photo (2026-10-15)
+
+- Known profiles only. An anonymous profile never has one: the server refuses it, the database refuses it, and the app never draws one even if told to.
+- Shown wherever the person appears (feed, comments, notifications, the follow rail, profile, Me) to signed-in students of the same campus. Initials remain the fallback, including when the photo fails to load.
+- Added or removed in Edit your profile under "Profile photo", with a plain statement of who can see it and that photos breaking the rules are removed. Offered once, optionally, after sign-up on the welcome step ("Add a profile photo" or "Open Moku without a photo").
+- Moderation is after the fact: a profile report shows the moderator the photo, and "Remove the profile photo" removes it with a recorded reason, separately from any penalty.

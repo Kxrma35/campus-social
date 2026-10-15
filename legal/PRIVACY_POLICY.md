@@ -36,6 +36,7 @@
 | Your name, course and year (known profile) | Show your known profile to students at your campus | While your account exists |
 | Generated handle and avatar (anonymous profile) | Show your anonymous profile | While your account exists |
 | Posts, comments, reactions, who you follow | Provide the service | Until you delete them, then removed within 30 days (kept longer only while a report about them is still being reviewed); the rest with your account |
+| Profile photo (optional, known profile only) | Show your face next to your name to students at your campus | Until you replace or remove it, or your account is removed. The file is deleted soon after. [period: counsel to confirm] |
 | Photos | Provide the service | As your posts. The photo file is deleted with them, and photos you upload but never use are deleted after a day |
 | In-app notifications | Tell you about replies, reactions and new followers | While your account exists |
 | The link between your account and your anonymous profile | Enforce bans and answer valid legal orders | While your account exists; stored encrypted |
@@ -126,7 +127,7 @@ What we do:
 - The link to your anonymous profile is encrypted, and the key is kept apart from the database.
 - Different parts of the service use different database logins with only the access they need. Moderators cannot read accounts, reporters or the link.
 - Identity lookups are recorded in a log that cannot be edited.
-- Photos are re-saved by the server and shown only to signed-in students at your campus.
+- Photos, including a profile photo, are re-saved by the server and shown only to signed-in students at your campus. An anonymous profile cannot have a photo.
 - [Encryption in transit and at rest: depends on hosting; confirm.]
 
 No system is perfectly secure. If a breach affects your data, we will notify the Data Commissioner within 72 hours of becoming aware and tell affected users. [Describe the procedure once it exists.]

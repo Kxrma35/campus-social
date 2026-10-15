@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { View } from "react-native";
 import { describeError } from "@/core/lib/errors";
+import { pickAndUpload } from "@/core/photos";
 import { checkCourse, checkName, checkStudyYear } from "@/core/lib/validation";
 import { useSession } from "@/core/session/SessionProvider";
 import { spacing } from "@/theme/tokens";
@@ -23,6 +24,11 @@ export default function EditProfile() {
   const [formError, setFormError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [profileId, setProfileId] = useState("");
+  const [hasAvatar, setHasAvatar] = useState(false);
+  const [photoVersion, setPhotoVersion] = useState(0);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -33,6 +39,8 @@ export default function EditProfile() {
         setName(p.displayName);
         setCourse(p.course ?? "");
         setYear(p.studyYear ? String(p.studyYear) : "");
+        setProfileId(p.profileId);
+        setHasAvatar(p.hasAvatar);
         setLoaded(true);
       })
       .catch((e) => alive && setFormError(describeError(e)));
@@ -40,6 +48,40 @@ export default function EditProfile() {
       alive = false;
     };
   }, [api]);
+
+  async function choosePhoto() {
+    setPhotoBusy(true);
+    setPhotoError(null);
+    try {
+      const [picked] = await pickAndUpload(api, "known", 1);
+      if (!picked) return;
+      await api.setAvatar(picked.uploadId);
+      setHasAvatar(true);
+      setPhotoVersion(Date.now());
+    } catch (e) {
+      setPhotoError(
+        e instanceof Error && e.message === "unsupported_image_type"
+          ? "Use a JPEG, PNG or WebP photo."
+          : describeError(e),
+      );
+    } finally {
+      setPhotoBusy(false);
+    }
+  }
+
+  async function removePhoto() {
+    setPhotoBusy(true);
+    setPhotoError(null);
+    try {
+      await api.removeAvatar();
+      setHasAvatar(false);
+      setPhotoVersion(Date.now());
+    } catch (e) {
+      setPhotoError(describeError(e));
+    } finally {
+      setPhotoBusy(false);
+    }
+  }
 
   async function save() {
     const n = checkName(name);
@@ -69,13 +111,52 @@ export default function EditProfile() {
   return (
     <SettingsPage>
       <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
-        <Avatar kind="known" name={name} size="lg" />
+        <Avatar
+          kind="known"
+          name={name}
+          size="lg"
+          profileId={profileId}
+          hasAvatar={hasAvatar}
+          cacheKey={photoVersion}
+        />
         <View style={{ flex: 1, gap: spacing.xs }}>
           <ProfileChip kind="known" self />
           <Text variant="small" tone="muted">
             Your name and course are shown to other students at your campus.
           </Text>
         </View>
+      </View>
+      <View style={{ gap: spacing.sm }}>
+        <Text variant="heading">Profile photo</Text>
+        <Text variant="small" tone="muted">
+          Other verified students at your campus can see this photo next to your name, on your known
+          profile only. Your anonymous profile never has one. Photos that break the community rules
+          are removed.
+        </Text>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
+          <View style={{ flexGrow: 1, flexBasis: 160 }}>
+            <Button
+              variant="secondary"
+              label={hasAvatar ? "Choose a different photo" : "Choose a photo"}
+              onPress={choosePhoto}
+              busy={photoBusy}
+              disabled={!loaded}
+              testID="choose-avatar"
+            />
+          </View>
+          {hasAvatar ? (
+            <View style={{ flexGrow: 1, flexBasis: 160 }}>
+              <Button
+                variant="secondary"
+                label="Remove photo"
+                onPress={removePhoto}
+                disabled={photoBusy}
+                testID="remove-avatar"
+              />
+            </View>
+          ) : null}
+        </View>
+        {photoError ? <InlineError>{photoError}</InlineError> : null}
       </View>
       <Text variant="small" tone="muted">
         If your handle was made from your name, it changes when you change your name. A handle you

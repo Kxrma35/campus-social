@@ -46,7 +46,13 @@ export default function MeScreen() {
           {me ? (
             <>
               <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.lg }}>
-                <Avatar kind="known" name={me.displayName} size="xl" />
+                <Avatar
+                  kind="known"
+                  name={me.displayName}
+                  size="xl"
+                  profileId={me.profileId}
+                  hasAvatar={me.hasAvatar}
+                />
                 <View style={{ flex: 1, gap: spacing.xs }}>
                   <ProfileChip kind="known" self />
                   <Text variant="display">{me.displayName}</Text>

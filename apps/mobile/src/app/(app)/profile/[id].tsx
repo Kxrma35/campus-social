@@ -88,7 +88,13 @@ export default function ProfileScreen() {
     <Screen padded={false}>
       <Column>
         <View style={{ alignItems: "center", gap: spacing.md, padding: spacing.lg, paddingTop: spacing.xl }}>
-          <Avatar kind={profile.kind} name={profile.displayName ?? profile.handle} size="xl" />
+          <Avatar
+            kind={profile.kind}
+            name={profile.displayName ?? profile.handle}
+            size="xl"
+            profileId={profile.profileId}
+            hasAvatar={profile.hasAvatar}
+          />
           <View style={{ alignItems: "center", gap: spacing.sm }}>
             <Text variant="title" style={{ textAlign: "center" }}>
               {title}

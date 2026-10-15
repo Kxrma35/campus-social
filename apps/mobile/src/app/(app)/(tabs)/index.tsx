@@ -146,7 +146,14 @@ export default function FeedScreen() {
               onPress={() => router.push({ pathname: "/profile/[id]", params: { id: p.profileId } })}
               style={{ alignItems: "center", gap: spacing.xs, width: 68, minHeight: 44 }}
             >
-              <Avatar kind={p.kind} name={p.displayName ?? p.handle} size="lg" ringed />
+              <Avatar
+                kind={p.kind}
+                name={p.displayName ?? p.handle}
+                size="lg"
+                ringed
+                profileId={p.profileId}
+                hasAvatar={p.hasAvatar}
+              />
               <View
                 style={{
                   marginTop: -14,

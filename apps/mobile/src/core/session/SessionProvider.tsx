@@ -106,6 +106,11 @@ export function SessionProvider({
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
+/** The API client when inside a session, else null. For display components that may render anywhere. */
+export function useOptionalApi(): ApiClient | null {
+  return useContext(Ctx)?.api ?? null;
+}
+
 export function useSession(): SessionValue {
   const v = useContext(Ctx);
   if (!v) throw new Error("useSession must be used inside <SessionProvider>");

@@ -87,7 +87,13 @@ export function PostCard({
           onPress={() => onOpenAuthor?.(post)}
           style={styles.person}
         >
-          <Avatar kind={author.kind} name={author.displayName ?? author.handle} size="md" />
+          <Avatar
+            kind={author.kind}
+            name={author.displayName ?? author.handle}
+            size="md"
+            profileId={author.profileId}
+            hasAvatar={author.hasAvatar}
+          />
           <View style={styles.names}>
             <Text variant="label" numberOfLines={1}>
               {title}
