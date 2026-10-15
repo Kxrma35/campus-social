@@ -4,13 +4,14 @@ import { SmtpMailer } from "../src/auth/mailer.js";
 import type { CodePurpose } from "../src/auth/store.js";
 
 function fake(fail?: unknown) {
-  const sent: { from: string; to: string; subject: string; text: string }[] = [];
+  const sent: { from: string; to: string; subject: string; text: string; headers?: Record<string, string> }[] = [];
   return {
     sent,
     transport: {
       sendMail: async (m: (typeof sent)[number]) => {
         if (fail) throw fail;
         sent.push(m);
+        return { accepted: [m.to], rejected: [], response: "250 2.0.0 queued" };
       },
     },
   };
@@ -69,5 +70,40 @@ describe("SmtpMailer", () => {
     expect(logged).toContain("EENVELOPE");
     expect(logged).not.toMatch(/usiu|123456/);
     spy.mockRestore();
+  });
+});
+
+describe("SmtpMailer delivery hints", () => {
+  it("marks every message as automated so receiving systems do not auto-reply", async () => {
+    const f = fake();
+    const mailer = new SmtpMailer(f.transport, "Moku <no-reply@example.test>");
+    await mailer.sendCode("jane@usiu.ac.ke", "123456", "login", 10);
+    await mailer.sendAlreadyRegistered("jane@usiu.ac.ke");
+    for (const m of f.sent) {
+      expect(m.headers?.["Auto-Submitted"]).toBe("auto-generated");
+      expect(m.headers?.["X-Auto-Response-Suppress"]).toBe("All");
+    }
+  });
+
+  it("sends a test message with no code and reports what the server said", async () => {
+    const f = fake();
+    const r = await new SmtpMailer(f.transport, "Moku <no-reply@example.test>").sendTest(
+      "jane@usiu.ac.ke",
+      new Date("2026-10-15T12:00:00Z"),
+    );
+    expect(r).toEqual({ accepted: ["jane@usiu.ac.ke"], rejected: [], response: "250 2.0.0 queued" });
+    const m = f.sent[0]!;
+    expect(m.subject).toBe("Moku email test");
+    expect(m.text).not.toMatch(/\b\d{6}\b/);
+    expect(m.text).toContain("2026-10-15T12:00:00.000Z");
+  });
+
+  it("reports a rejected recipient instead of pretending it was sent", async () => {
+    const transport = {
+      sendMail: async () => ({ accepted: [], rejected: ["jane@usiu.ac.ke"], response: "550 no such user" }),
+    };
+    const r = await new SmtpMailer(transport, "no-reply@example.test").sendTest("jane@usiu.ac.ke");
+    expect(r.rejected).toEqual(["jane@usiu.ac.ke"]);
+    expect(r.accepted).toEqual([]);
   });
 });

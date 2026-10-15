@@ -68,6 +68,17 @@ node check-production.mjs --api .env.api --admin .env.admin --closed-test
 
 It refuses placeholders, a non-production `NODE_ENV`, development settings, the wrong database role for a service, short or reused keys, example email settings, a missing proxy count, draft terms and an empty helpline list. It never prints a value. `--closed-test` relaxes only the two legal and helpline checks. CI runs its tests (`node --test check-production.test.mjs`).
 
+## Checking that sign-in codes will arrive
+
+Codes must reach real USIU mailboxes, which sit behind Microsoft 365 filtering. Two tools, both read-only or harmless:
+
+```bash
+node check-mail-dns.mjs --from "Moku <no-reply@mail.yourdomain>" --dkim-selector <selector> --recipient-domain usiu.ac.ke
+cd ../apps/api && npm run mail-test -- you@usiu.ac.ke     # needs SMTP_URL and MAIL_FROM in the environment
+```
+
+The first reads SPF, DKIM and DMARC for your sending domain. The second sends one test message with no code in it and names the usual failures. The full procedure, what USIU's mail system looks like and a note for USIU IT are in `../docs/email-deliverability.md`. CI runs the DNS checker's tests.
+
 ## Running the jobs on a schedule
 
 Nothing runs the maintenance sweep or the backups for you. `schedule/` holds a small, host-neutral way to do it, with failure alerts and no third party:

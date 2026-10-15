@@ -134,7 +134,7 @@ jobs:
           node-version: 22
       - name: Production configuration check and its tests
         working-directory: deploy
-        run: node --test check-production.test.mjs
+        run: node --test check-production.test.mjs check-mail-dns.test.mjs
       - name: Scheduled job scripts
         run: bash deploy/schedule/test-jobs.sh
       - name: Compose file is valid

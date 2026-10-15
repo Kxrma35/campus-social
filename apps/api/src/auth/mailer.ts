@@ -83,7 +83,25 @@ export class ConsoleMailer implements Mailer {
 }
 
 export interface MailTransport {
-  sendMail(message: { from: string; to: string; subject: string; text: string }): Promise<unknown>;
+  sendMail(message: {
+    from: string;
+    to: string;
+    subject: string;
+    text: string;
+    headers?: Record<string, string>;
+  }): Promise<unknown>;
+}
+
+/** What the receiving mail system is told about our messages: automated, and please do not auto-reply. */
+const AUTOMATED_HEADERS: Record<string, string> = {
+  "Auto-Submitted": "auto-generated",
+  "X-Auto-Response-Suppress": "All",
+};
+
+export interface TestSendResult {
+  accepted: string[];
+  rejected: string[];
+  response: string;
 }
 
 const PURPOSE_TEXT: Record<CodePurpose, { subject: string; line: string }> = {
@@ -153,9 +171,39 @@ export class SmtpMailer implements Mailer {
     await this.send(to, m.subject, m.text);
   }
 
-  private async send(to: string, subject: string, text: string) {
+  /** Sends a harmless test message so an operator can prove delivery to a real mailbox. */
+  async sendTest(to: string, at: Date = new Date()): Promise<TestSendResult> {
+    const info = (await this.deliver(
+      to,
+      "Moku email test",
+      [
+        "This is a test message from Moku. It contains no code and needs no action.",
+        "",
+        `Sent at ${at.toISOString()}.`,
+        "If it reached your inbox and not your junk or quarantine folder, sign-in codes will arrive the same way.",
+      ].join("\n"),
+    )) as { accepted?: unknown; rejected?: unknown; response?: unknown } | undefined;
+    const list = (v: unknown) => (Array.isArray(v) ? v.map(String) : []);
+    return {
+      accepted: list(info?.accepted),
+      rejected: list(info?.rejected),
+      response: typeof info?.response === "string" ? info.response : "",
+    };
+  }
+
+  private deliver(to: string, subject: string, text: string): Promise<unknown> {
+    return this.transport.sendMail({
+      from: this.from,
+      to,
+      subject,
+      text,
+      headers: AUTOMATED_HEADERS,
+    });
+  }
+
+  private async send(to: string, subject: string, text: string): Promise<unknown> {
     try {
-      await this.transport.sendMail({ from: this.from, to, subject, text });
+      return await this.deliver(to, subject, text);
     } catch (err) {
       const e = err as { code?: unknown; responseCode?: unknown };
       console.error(

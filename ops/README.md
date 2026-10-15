@@ -21,6 +21,8 @@ Runbooks for the people who run the service. All are **drafts**: they describe t
 | `ops/restore-drill.sh --backup FILE [--manifest FILE]` | link keys from the key backup, Docker | Restores into a throwaway container, checks counts, runs `verify-keys`, writes a record to `ops/drills/`. |
 | `deploy/schedule/run-job.sh NAME -- COMMAND` | `JOB_STATE_DIR`, an alert target | Runs the sweep or a backup with a lock, timeout and failure alert. See `deploy/README.md`. |
 | `deploy/schedule/check-jobs.sh lifecycle:30 backup:30` | `JOB_STATE_DIR`, an alert target | Alerts when a scheduled job has stopped succeeding. |
+| `npm run mail-test -- you@usiu.ac.ke` (in `apps/api`) | `SMTP_URL`, `MAIL_FROM` | Sends one harmless test email and reports what the mail server said. |
+| `node deploy/check-mail-dns.mjs --from ... --dkim-selector S` | public DNS | Checks SPF, DKIM and DMARC for the sending domain. |
 | `node deploy/check-production.mjs --api .env.api --admin .env.admin` | the env files | Refuses placeholders, development settings and unsafe defaults before a deployment. |
 | `npm run legal-hold -- place ...` | `LEGAL_HOLD_DATABASE_URL` | Preserves records during an investigation. |
 | `npm run lifecycle` | `LIFECYCLE_DATABASE_URL` | Maintenance. **Deletes data; do not run during an investigation.** |
