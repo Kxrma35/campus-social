@@ -1,6 +1,7 @@
 import pg from "pg";
 import { PgLifecycleStore } from "../account/pgLifecycleStore.js";
 import { runLifecycleSweep } from "../account/lifecycleStore.js";
+import { createMailer } from "../auth/mailerFactory.js";
 import { loadConfig } from "../config.js";
 import { createPhotoStoreOrExit } from "../content/storage.js";
 import { LinkCrypto } from "../identity/linkCrypto.js";
@@ -23,6 +24,9 @@ const opts = {
   appealRecordDays: config.RETENTION_APPEAL_DAYS,
   warningMonths: config.WARNING_EXPIRY_MONTHS,
   auditLogYears: config.AUDIT_LOG_RETENTION_YEARS,
+  reminderDueSoonDays: config.REVERIFY_REMINDER_DAYS,
+  reminderClosingSoonDays: config.CLOSURE_REMINDER_DAYS,
+  reminderMaxPerRun: config.REMINDER_MAX_PER_RUN,
 };
 
 if (process.argv.includes("--dry")) {
@@ -36,6 +40,10 @@ const linkCrypto =
     : undefined;
 
 const photoStore = createPhotoStoreOrExit(config);
+const mailer = createMailer(config) ?? undefined;
+if (!mailer) {
+  console.warn("SMTP_URL and MAIL_FROM are not set in production: reminder emails are skipped.");
+}
 
 const pool = new pg.Pool({ connectionString: url, max: 2 });
 try {
@@ -47,8 +55,14 @@ try {
     opts,
     new Date(),
     photoStore,
+    mailer,
   );
   console.log("lifecycle sweep complete:", result);
+  if (result.remindersFailed > 0) {
+    console.warn(
+      `${result.remindersFailed} reminder email(s) could not be sent; they will be tried again on the next run.`,
+    );
+  }
   if (result.filesFailed > 0) {
     console.warn(
       `${result.filesFailed} photo file(s) could not be deleted; they stay queued and will be retried.`,

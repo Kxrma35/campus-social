@@ -13,7 +13,7 @@ import { z } from "zod";
 import { PgLifecycleStore } from "./account/pgLifecycleStore.js";
 import { buildApp } from "./app.js";
 import { PgAuthStore } from "./auth/pgStore.js";
-import { ConsoleMailer, SmtpMailer } from "./auth/mailer.js";
+import { createMailer } from "./auth/mailerFactory.js";
 import { AuthService } from "./auth/service.js";
 import { loadConfig } from "./config.js";
 
@@ -35,12 +35,11 @@ if (config.NODE_ENV === "production" && !config.SMTP_URL) {
   process.exit(1);
 }
 
-const mailer =
-  config.SMTP_URL && config.MAIL_FROM
-    ? SmtpMailer.fromUrl(config.SMTP_URL, config.MAIL_FROM, {
-        requireTls: config.NODE_ENV === "production",
-      })
-    : new ConsoleMailer(undefined, config.NODE_ENV);
+const mailer = createMailer(config);
+if (!mailer) {
+  console.error("No mailer is available.");
+  process.exit(1);
+}
 
 const authStore = new PgAuthStore(new pg.Pool({ connectionString: DATABASE_URL, max: 10 }));
 const auth = new AuthService(authStore, mailer, {

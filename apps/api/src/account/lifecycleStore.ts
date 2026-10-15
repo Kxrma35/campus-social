@@ -1,4 +1,6 @@
 import type { PhotoStore } from "../content/photos.js";
+import { runReminders, type ReminderStore } from "./reminders.js";
+import type { Mailer } from "../auth/mailer.js";
 
 export type CloseReason = "user_request" | "reverification_expired";
 
@@ -163,7 +165,9 @@ export interface PurgeResult {
   skipped: number;
 }
 
-export interface LifecycleStore {
+export interface LifecycleStore extends ReminderStore {
+  purgeOldReminders(cutoff: Date): Promise<number>;
+
   markOverdueReadOnly(now: Date): Promise<number>;
 
   hideBannedAnonymousContent(now: Date): Promise<{ hidden: number; skipped: number }>;
@@ -217,9 +221,16 @@ export interface SweepOptions {
   appealRecordDays?: number;
   warningMonths?: number;
   auditLogYears?: number;
+  reminderDueSoonDays?: number[];
+  reminderClosingSoonDays?: number[];
+  reminderMaxPerRun?: number;
+  reminderRetentionDays?: number;
 }
 
 export interface SweepResult {
+  remindersSent: number;
+  remindersFailed: number;
+  remindersPurged: number;
   hiddenBannedAnonymous: number;
   restoredAnonymous: number;
   liftedSuspensions: number;
@@ -280,12 +291,31 @@ export async function runLifecycleSweep(
   opts: SweepOptions,
   now: Date,
   photos?: PhotoStore,
+  mailer?: Mailer,
 ): Promise<SweepResult> {
   const hiding = await store.hideBannedAnonymousContent(now);
   const restoring = await store.restoreUnbannedAnonymousContent();
   const liftedSuspensions = await store.liftExpiredSuspensions(now);
   const markedReadOnly = await store.markOverdueReadOnly(now);
   const closing = await store.closeExpiredGrace(now, opts.reverifyGraceDays);
+
+  const reminders = mailer
+    ? await runReminders(
+        store,
+        mailer,
+        {
+          dueSoonDays: opts.reminderDueSoonDays ?? [30, 7],
+          closingSoonDays: opts.reminderClosingSoonDays ?? [7],
+          graceDays: opts.reverifyGraceDays,
+          purgeDays: opts.purgeAfterDays,
+          maxPerRun: opts.reminderMaxPerRun ?? 500,
+        },
+        now,
+      )
+    : { sent: 0, failed: 0 };
+  const remindersPurged = await store.purgeOldReminders(
+    new Date(now.getTime() - (opts.reminderRetentionDays ?? 400) * DAY_MS),
+  );
 
   const cutoff = new Date(now.getTime() - opts.purgeAfterDays * DAY_MS);
   const content = await store.purgeDeletedContent(cutoff);
@@ -307,6 +337,9 @@ export async function runLifecycleSweep(
   const files = await drainStorage(store, photos);
 
   return {
+    remindersSent: reminders.sent,
+    remindersFailed: reminders.failed,
+    remindersPurged,
     hiddenBannedAnonymous: hiding.hidden,
     restoredAnonymous: restoring.restored,
     liftedSuspensions,

@@ -1,4 +1,5 @@
 import type { Pool, PoolClient } from "pg";
+import type { ReminderCandidate, ReminderKind } from "./reminders.js";
 import {
   AnonymousLinkUnreadable,
   AnonymousResolverMissing,
@@ -290,6 +291,60 @@ export class PgLifecycleStore implements LifecycleStore {
                              and (p.ends_at is null or p.ends_at > $1))`,
       [now],
     );
+    return r.rowCount ?? 0;
+  }
+
+  async listReminderCandidates(
+    now: Date,
+    input: { dueHorizonDays: number; closingHorizonDays: number; graceDays: number; limit: number },
+  ): Promise<ReminderCandidate[]> {
+    const r = await this.pool.query(
+      `select a.id, a.email, a.status, a.reverify_due_at,
+              coalesce(array_agg(r.kind || ':' || r.threshold_days::text)
+                       filter (where r.account_id is not null), '{}') as sent
+         from accounts a
+         left join account_reminders r
+           on r.account_id = a.id and r.cycle_due_at = a.reverify_due_at
+        where (a.status = 'active'
+               and a.reverify_due_at > $1
+               and a.reverify_due_at <= $1 + make_interval(days => $2))
+           or (a.status = 'read_only'
+               and a.reverify_due_at + make_interval(days => $4) > $1
+               and a.reverify_due_at + make_interval(days => $4) <= $1 + make_interval(days => $3))
+        group by a.id
+        order by a.reverify_due_at
+        limit $5`,
+      [now, input.dueHorizonDays, input.closingHorizonDays, input.graceDays, input.limit],
+    );
+    return r.rows.map((row) => ({
+      accountId: row.id,
+      email: row.email,
+      status: row.status as "active" | "read_only",
+      reverifyDueAt: row.reverify_due_at,
+      sent: (row.sent as string[]).map((s) => {
+        const [kind, days] = s.split(":");
+        return { kind: kind as ReminderKind, thresholdDays: Number(days) };
+      }),
+    }));
+  }
+
+  async recordReminder(input: {
+    accountId: string;
+    kind: ReminderKind;
+    thresholdDays: number;
+    cycleDueAt: Date;
+    now: Date;
+  }): Promise<void> {
+    await this.pool.query(
+      `insert into account_reminders (account_id, kind, threshold_days, cycle_due_at, sent_at)
+       values ($1, $2, $3, $4, $5)
+       on conflict do nothing`,
+      [input.accountId, input.kind, input.thresholdDays, input.cycleDueAt, input.now],
+    );
+  }
+
+  async purgeOldReminders(cutoff: Date): Promise<number> {
+    const r = await this.pool.query(`delete from account_reminders where sent_at < $1`, [cutoff]);
     return r.rowCount ?? 0;
   }
 

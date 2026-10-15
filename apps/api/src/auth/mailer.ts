@@ -2,8 +2,60 @@ import nodemailer from "nodemailer";
 import { ApiError } from "../errors.js";
 import type { CodePurpose } from "./store.js";
 
+export interface ReverifyReminder {
+  kind: "due_soon" | "closing_soon";
+  daysLeft: number;
+  deadline: Date;
+  graceDays: number;
+  purgeDays: number;
+}
+
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+export function formatDeadline(d: Date): string {
+  return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+}
+
+function plural(n: number, word: string): string {
+  return `${n} ${word}${n === 1 ? "" : "s"}`;
+}
+
+export function reminderMessage(r: ReverifyReminder): { subject: string; text: string } {
+  const date = formatDeadline(r.deadline);
+  if (r.kind === "due_soon") {
+    return {
+      subject: `Campus Social: confirm your student email by ${date}`,
+      text: [
+        `Your Campus Social account needs to be re-verified by ${date}, which is in ${plural(r.daysLeft, "day")}.`,
+        "",
+        'To do it, open the app, go to Settings and choose "Confirm your email again". We will send a code to this address.',
+        "",
+        `If you do nothing, your account becomes read-only on ${date}: you can still sign in and read, but you cannot post or comment. If it is still not confirmed ${plural(r.graceDays, "day")} after that, the account is closed and your data is deleted about ${plural(r.purgeDays, "day")} later.`,
+        "",
+        "If you are leaving the university or no longer use this address, you can download your data from Settings, under Your data, before then.",
+        "",
+        "You are getting this email because you have a Campus Social account. You can ignore it if you no longer want one.",
+      ].join("\n"),
+    };
+  }
+  return {
+    subject: `Campus Social: your account will close on ${date}`,
+    text: [
+      `Your Campus Social account is read-only because it was not re-verified. It will be closed on ${date}, which is in ${plural(r.daysLeft, "day")}, and your data is deleted about ${plural(r.purgeDays, "day")} after that.`,
+      "",
+      'To keep it, open the app, go to Settings and choose "Confirm your email (needed)". We will send a code to this address.',
+      "",
+      "To keep a copy of your data, download it from Settings, under Your data, before the account closes. If you no longer want the account, you do not need to do anything.",
+    ].join("\n"),
+  };
+}
+
 export interface Mailer {
   sendCode(to: string, code: string, purpose: CodePurpose, ttlMinutes: number): Promise<void>;
+  sendReverifyReminder(to: string, reminder: ReverifyReminder): Promise<void>;
   sendAlreadyRegistered(to: string): Promise<void>;
 }
 
@@ -23,6 +75,10 @@ export class ConsoleMailer implements Mailer {
 
   async sendAlreadyRegistered(to: string) {
     this.write(`[mail:dev] ${to} already has an account; suggest logging in`);
+  }
+
+  async sendReverifyReminder(to: string, r: ReverifyReminder) {
+    this.write(`[mail:dev] ${r.kind} reminder for ${to}: ${r.daysLeft} day(s) until ${formatDeadline(r.deadline)}`);
   }
 }
 
@@ -90,6 +146,11 @@ export class SmtpMailer implements Mailer {
         "If you did not do this, you can ignore this email.",
       ].join("\n"),
     );
+  }
+
+  async sendReverifyReminder(to: string, reminder: ReverifyReminder) {
+    const m = reminderMessage(reminder);
+    await this.send(to, m.subject, m.text);
   }
 
   private async send(to: string, subject: string, text: string) {

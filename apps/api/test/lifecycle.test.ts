@@ -86,6 +86,9 @@ describe("annual re-verification", () => {
     advance(c, 364 * DAY);
     const r = await runLifecycleSweep(c.lifecycle, SWEEP, c.clock.now);
     expect(r).toEqual({
+      remindersSent: 0,
+      remindersFailed: 0,
+      remindersPurged: 0,
       hiddenBannedAnonymous: 0,
       restoredAnonymous: 0,
       liftedSuspensions: 0,
@@ -174,6 +177,9 @@ describe("annual re-verification", () => {
     await runLifecycleSweep(c.lifecycle, SWEEP, c.clock.now);
     const again = await runLifecycleSweep(c.lifecycle, SWEEP, c.clock.now);
     expect(again).toEqual({
+      remindersSent: 0,
+      remindersFailed: 0,
+      remindersPurged: 0,
       hiddenBannedAnonymous: 0,
       restoredAnonymous: 0,
       liftedSuspensions: 0,

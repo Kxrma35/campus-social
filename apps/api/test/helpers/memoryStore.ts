@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { safeEqual } from "../../src/auth/crypto.js";
-import type { Mailer } from "../../src/auth/mailer.js";
+import type { Mailer, ReverifyReminder } from "../../src/auth/mailer.js";
+import type { ReminderCandidate, ReminderKind } from "../../src/account/reminders.js";
 import type {
   AccountRow,
   AccountStatus,
@@ -359,6 +360,73 @@ export class MemoryAuthStore implements AuthStore {
 }
 
 export class MemoryLifecycleStore implements LifecycleStore {
+  reminderRows: {
+    accountId: string;
+    kind: ReminderKind;
+    thresholdDays: number;
+    cycleDueAt: Date;
+    sentAt: Date;
+  }[] = [];
+
+  async listReminderCandidates(
+    now: Date,
+    input: { dueHorizonDays: number; closingHorizonDays: number; graceDays: number; limit: number },
+  ): Promise<ReminderCandidate[]> {
+    const DAY = 86_400_000;
+    const out: ReminderCandidate[] = [];
+    for (const a of this.db.accounts.values()) {
+      const due = a.reverifyDueAt.getTime();
+      const t = now.getTime();
+      const wantActive = a.status === "active" && due > t && due <= t + input.dueHorizonDays * DAY;
+      const closes = due + input.graceDays * DAY;
+      const wantReadOnly =
+        a.status === "read_only" && closes > t && closes <= t + input.closingHorizonDays * DAY;
+      if (!wantActive && !wantReadOnly) continue;
+      out.push({
+        accountId: a.id,
+        email: a.email,
+        status: a.status as "active" | "read_only",
+        reverifyDueAt: a.reverifyDueAt,
+        sent: this.reminderRows
+          .filter((r) => r.accountId === a.id && r.cycleDueAt.getTime() === due)
+          .map((r) => ({ kind: r.kind, thresholdDays: r.thresholdDays })),
+      });
+    }
+    out.sort((x, y) => x.reverifyDueAt.getTime() - y.reverifyDueAt.getTime());
+    return out.slice(0, input.limit);
+  }
+
+  async recordReminder(input: {
+    accountId: string;
+    kind: ReminderKind;
+    thresholdDays: number;
+    cycleDueAt: Date;
+    now: Date;
+  }): Promise<void> {
+    const exists = this.reminderRows.some(
+      (r) =>
+        r.accountId === input.accountId &&
+        r.kind === input.kind &&
+        r.thresholdDays === input.thresholdDays &&
+        r.cycleDueAt.getTime() === input.cycleDueAt.getTime(),
+    );
+    if (!exists) {
+      this.reminderRows.push({
+        accountId: input.accountId,
+        kind: input.kind,
+        thresholdDays: input.thresholdDays,
+        cycleDueAt: input.cycleDueAt,
+        sentAt: input.now,
+      });
+    }
+  }
+
+  async purgeOldReminders(cutoff: Date): Promise<number> {
+    const before = this.reminderRows.length;
+    this.reminderRows = this.reminderRows.filter((r) => r.sentAt >= cutoff);
+    return before - this.reminderRows.length;
+  }
+
   constructor(
     private readonly db: MemoryAuthStore,
     private readonly opts: { canResolveAnonymous?: boolean } = {},
@@ -673,6 +741,13 @@ export class MemoryLifecycleStore implements LifecycleStore {
 export class CapturingMailer implements Mailer {
   codes: { to: string; code: string; purpose: CodePurpose }[] = [];
   alreadyRegistered: string[] = [];
+  reminders: { to: string; reminder: ReverifyReminder }[] = [];
+  failReminderFor = new Set<string>();
+
+  async sendReverifyReminder(to: string, reminder: ReverifyReminder) {
+    if (this.failReminderFor.has(to)) throw new Error("mail unavailable");
+    this.reminders.push({ to, reminder });
+  }
 
   async sendCode(to: string, code: string, purpose: CodePurpose) {
     this.codes.push({ to, code, purpose });

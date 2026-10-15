@@ -119,6 +119,9 @@ The job is manual: nothing runs it for you. The defaults are suggested starting 
 | `RETENTION_APPEAL_DAYS` | `365` | 180 | Appeal text; the row stays to enforce one appeal per account. |
 | `WARNING_EXPIRY_MONTHS` | `12` | 3 | Warnings stop counting and are deleted. |
 | `AUDIT_LOG_RETENTION_YEARS` | `3` | 1 | Unmask audit log. |
+| `REVERIFY_REMINDER_DAYS` | `30,7` | 1 each, up to 5 | Days before the re-verification deadline to email an active student. An empty value switches these off. |
+| `CLOSURE_REMINDER_DAYS` | `7` | 1 each, max 60 | Days before a read-only account closes to email the student. An empty value switches these off. |
+| `REMINDER_MAX_PER_RUN` | `500` | 1 | The most reminder emails one run will attempt, so a first run after a long gap cannot flood the mail provider. The rest go out on the next run. |
 
 ### Used by one command only
 
@@ -148,7 +151,7 @@ See `apps/mobile/README.md` for the build profiles and the release check.
 
 ## Database
 
-Migrations are plain SQL for PostgreSQL 15+, applied in order (`0001` to `0010`). All ten have been applied to PostgreSQL 16 in a throwaway container and the full test suite run against the result.
+Migrations are plain SQL for PostgreSQL 15+, applied in order (`0001` to `0011`). All eleven have been applied to PostgreSQL 16 in a throwaway container and the full test suite run against the result.
 
 ```bash
 for f in db/migrations/*.sql; do
@@ -204,7 +207,7 @@ Known limits:
 - **Bans:** a ban sets the status but does not yet remove content. That belongs to M3 moderation.
 - **Photo descriptions (alt text):** the person posting can describe each photo (`altTexts` on `POST /posts`, or `PATCH /photos/:id` for the uploader to change or clear it later; max 500 characters, optional). Stored on the upload row by migration `0010_photo_alt_text.sql`, so it is hidden, exported and purged with the photo; shown to moderators with the photo. Verified with in-memory tests and against real PostgreSQL (grants, check constraint, uploader-only edits, anonymous profile, moderator view, data export).
 - **Email:** one-time codes are sent over SMTP (`SMTP_URL`, `MAIL_FROM`; any provider that offers SMTP). Plain text only, no links or tracking, code never in the subject; STARTTLS is enforced in production; a failed send is one generic 503 that does not reveal whether an address has an account; addresses and codes are never logged. Without `SMTP_URL`, development prints codes to the API log and the console mailer refuses to run in production. Tested against a local SMTP sink, **not yet against a real provider**: confirm delivery, SPF/DKIM/DMARC and spam placement for a USIU address before any pilot.
-- **Reminders:** no re-verification reminder emails yet.
+- **Reminders:** the maintenance job (`npm run lifecycle`) emails a student before the re-verification deadline (default 30 and 7 days before) and a read-only student before the account closes (default 7 days before). Each reminder is sent once per cycle: a record of which reminder went to which account (no message text) is kept in `account_reminders`, so running the job again does not repeat it, a failed send is retried on the next run, and a successful re-verification starts a fresh cycle. If a run is missed, only the most urgent reminder that applies is sent. **Nothing sends them unless the job is run**, and in production they need `SMTP_URL`; without it the job skips reminders and says so. Plain text, no links, no tracking.
 - **Still to build in M1:** optional two-factor login and per-IP rate limiting at the edge.
 
 ## M2 status (posting, feed and follows)
@@ -410,6 +413,7 @@ Status: **tools implemented and verified**: 14 unit tests plus 23 PostgreSQL tes
 | Upheld reports, moderator actions, ended suspensions and bans | Deleted `RETENTION_RESOLVED_RECORD_DAYS` (365) after resolution. **A ban in force is never deleted**, nor the action behind it. |
 | Warnings | Stop counting, and are deleted, after `WARNING_EXPIRY_MONTHS` (12). The account's warning count goes down, so an expired warning also unlocks the anonymous profile again. |
 | Appeals | After `RETENTION_APPEAL_DAYS` (365) the message, decision note and decider are **removed but the row is kept**, because that row is what enforces "one appeal per account". |
+| Reminder records | `account_reminders` rows are deleted 400 days after they were sent. They hold only an account id, the kind, the threshold and the cycle, never the message. |
 | Unmask audit log | Rows older than `AUDIT_LOG_RETENTION_YEARS` (3) are deleted through one narrow database function, and each purge is itself logged. |
 | Legal holds | Anything under a hold is kept until released, and open reports are never deleted. Holds are placed by an operator with `npm run legal-hold`, not by moderators. |
 

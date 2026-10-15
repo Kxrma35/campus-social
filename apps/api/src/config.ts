@@ -1,5 +1,18 @@
 import { z } from "zod";
 
+const dayList = (max: number) =>
+  z
+    .string()
+    .transform((v, ctx) => {
+      const parts = v.split(",").map((p) => p.trim()).filter((p) => p.length > 0);
+      const nums = parts.map(Number);
+      if (nums.some((n) => !Number.isInteger(n) || n < 1 || n > max) || nums.length > 5) {
+        ctx.addIssue({ code: "custom", message: `use up to 5 whole numbers from 1 to ${max}, separated by commas` });
+        return z.NEVER;
+      }
+      return [...new Set(nums)].sort((a, b) => b - a);
+    });
+
 const schema = z.object({
   PORT: z.coerce.number().default(3000),
   HOST: z.string().min(1).default("127.0.0.1"),
@@ -49,6 +62,9 @@ const schema = z.object({
   AUDIT_LOG_RETENTION_YEARS: z.coerce.number().int().min(1).default(3),
   // Spec: deleted content is purged within 30 days.
   PURGE_AFTER_DAYS: z.coerce.number().int().positive().default(30),
+  REVERIFY_REMINDER_DAYS: dayList(365).default("30,7"),
+  CLOSURE_REMINDER_DAYS: dayList(60).default("7"),
+  REMINDER_MAX_PER_RUN: z.coerce.number().int().min(1).max(5000).default(500),
 });
 
 export type Config = z.infer<typeof schema>;
