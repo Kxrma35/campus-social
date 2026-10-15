@@ -144,7 +144,7 @@ export default function PostScreen() {
 
   return (
     <Screen padded={false}>
-      <View style={{ margin: 16 }}>
+      <View>
         <PostCard
           detail
           post={post}

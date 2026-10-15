@@ -12,7 +12,15 @@ const LABEL: Record<ProfileKind, string> = {
 };
 
 /** Always text plus an icon with its own shape, never colour alone. */
-export function IdentityBadge({ kind, label }: { kind: ProfileKind; label?: string }) {
+export function IdentityBadge({
+  kind,
+  label,
+  accessibilityLabel,
+}: {
+  kind: ProfileKind;
+  label?: string;
+  accessibilityLabel?: string;
+}) {
   const t = useTheme();
   const anon = kind === "anonymous";
   const ink = anon ? t.identity.anon : t.identity.known;
@@ -21,7 +29,7 @@ export function IdentityBadge({ kind, label }: { kind: ProfileKind; label?: stri
     <View
       accessible
       accessibilityRole="text"
-      accessibilityLabel={text}
+      accessibilityLabel={accessibilityLabel ?? text}
       style={[styles.badge, { borderColor: ink, backgroundColor: anon ? t.anonymousSoft : t.primarySoft }]}
     >
       <Svg width={16} height={16} viewBox="0 0 24 24" {...hiddenFromReaders}>

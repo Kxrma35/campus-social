@@ -1,18 +1,23 @@
 import { router } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
+import { FlatList, Pressable, RefreshControl, ScrollView, View } from "react-native";
 import type { Post, PostSort, Profile } from "@/core/api/types";
 import { describeError } from "@/core/lib/errors";
 import { useIdentity } from "@/core/session/IdentityProvider";
 import { useSession } from "@/core/session/SessionProvider";
 import { usePagedList } from "@/core/usePagedList";
 import { useReactions } from "@/core/useReactions";
+import { APP_NAME } from "@/theme/brand";
 import { radius, spacing } from "@/theme/tokens";
 import { ActingSwitcher } from "@/ui/ActingSwitcher";
 import { Avatar } from "@/ui/Avatar";
+import { EmptyState } from "@/ui/EmptyState";
+import { FeedSkeleton } from "@/ui/FeedSkeleton";
 import { Icon } from "@/ui/Icon";
+import { IconButton } from "@/ui/IconButton";
+import { Logomark } from "@/ui/Logomark";
+import { ProfileChip } from "@/ui/ProfileChip";
 import { Button } from "@/ui/Button";
-import { Loading } from "@/ui/Loading";
 import { Notice } from "@/ui/Notice";
 import { PostCard } from "@/ui/PostCard";
 import { SegmentedControl } from "@/ui/SegmentedControl";
@@ -26,15 +31,6 @@ const TABS: { key: Tab; label: string }[] = [
   { key: "top", label: "Top this week" },
   { key: "following", label: "Following" },
 ];
-
-function greeting(): string {
-  const h = new Date().getHours();
-  return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
-}
-
-function todayLabel(): string {
-  return new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" });
-}
 
 export default function FeedScreen() {
   const { api } = useSession();
@@ -68,7 +64,16 @@ export default function FeedScreen() {
   }, [api, acting]);
 
   const header = (
-    <View style={{ gap: spacing.md, paddingTop: spacing.md, paddingBottom: spacing.md }}>
+    <View
+      style={{
+        gap: spacing.md,
+        paddingTop: spacing.md,
+        paddingBottom: spacing.md,
+        width: "100%",
+        maxWidth: 640,
+        alignSelf: "center",
+      }}
+    >
       <View
         style={{
           flexDirection: "row",
@@ -77,27 +82,16 @@ export default function FeedScreen() {
           paddingHorizontal: spacing.lg,
         }}
       >
-        <View style={{ flexShrink: 1 }}>
-          <Text variant="heading">{greeting()}</Text>
-          <Text variant="small" tone="muted">
-            {todayLabel()}
-          </Text>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
+          <Logomark size={30} />
+          <Text variant="title">{APP_NAME}</Text>
         </View>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Notifications"
+        <IconButton
+          icon="bell"
+          label="Notifications"
           onPress={() => router.navigate("/notifications")}
-          style={{
-            width: 44,
-            height: 44,
-            borderRadius: 22,
-            backgroundColor: t.card,
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Icon name="bell" color={t.text} size={22} />
-        </Pressable>
+          testID="open-notifications"
+        />
       </View>
       <View style={{ gap: spacing.md, paddingHorizontal: spacing.lg }}>
         <StatusBanner />
@@ -109,21 +103,28 @@ export default function FeedScreen() {
         accessibilityLabel="Write a post"
         onPress={() => router.push("/compose")}
         style={({ pressed }) => ({
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: spacing.sm,
-          minHeight: 52,
           marginHorizontal: spacing.lg,
-          borderRadius: radius.lg,
+          padding: spacing.md,
+          gap: spacing.sm,
+          borderRadius: radius.md,
           borderWidth: 1,
-          borderStyle: "dashed",
           borderColor: t.border,
-          opacity: pressed ? 0.7 : 1,
+          backgroundColor: t.card,
+          opacity: pressed ? 0.8 : 1,
         })}
       >
-        <Icon name="plus" color={t.text} size={18} />
-        <Text variant="label">Write a post</Text>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md, minHeight: 44 }}>
+          <Avatar
+            kind={acting}
+            name={acting === "known" ? profiles?.known?.handle : profiles?.anonymous?.handle}
+            size="sm"
+          />
+          <Text tone="muted" style={{ flex: 1 }}>
+            What is on your mind?
+          </Text>
+          <Icon name="image" color={t.textMuted} />
+        </View>
+        <ProfileChip kind={acting} self prefix="Posting as" />
       </Pressable>
       {tab !== "following" && people.length > 0 ? (
         <Text variant="label" style={{ paddingHorizontal: spacing.lg }}>
@@ -185,7 +186,7 @@ export default function FeedScreen() {
     return (
       <View style={{ flex: 1, backgroundColor: t.ground }}>
         {header}
-        <Loading label="Loading posts" />
+        <FeedSkeleton />
       </View>
     );
   }
@@ -198,7 +199,7 @@ export default function FeedScreen() {
       ListHeaderComponent={header}
       contentContainerStyle={{ paddingBottom: spacing.xxl }}
       renderItem={({ item }) => (
-        <View style={{ marginHorizontal: spacing.lg, marginBottom: spacing.md }}>
+        <View>
           <PostCard
             post={item}
             myProfileIds={mine}
@@ -228,13 +229,11 @@ export default function FeedScreen() {
             <Button label="Try again" onPress={list.reload} />
           </View>
         ) : (
-          <View style={{ padding: spacing.lg }}>
-            <Text tone="muted">
-              {tab === "following"
-                ? "Nothing here yet. Follow people to see their posts in this tab."
-                : "No posts yet. Be the first to write one."}
-            </Text>
-          </View>
+          <EmptyState title={tab === "following" ? "Nothing here yet" : "No posts yet"}>
+            {tab === "following"
+              ? "Follow people to see their posts in this tab."
+              : "Be the first to write one."}
+          </EmptyState>
         )
       }
       ListFooterComponent={

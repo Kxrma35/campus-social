@@ -77,7 +77,7 @@ export function PostCard({
   const heart = post.viewerReacted ? t.primary : t.textMuted;
 
   return (
-    <View style={[styles.post, { backgroundColor: t.card, borderColor: t.hairline }]}>
+    <View style={[styles.post, { borderBottomColor: t.hairline }]}>
       <View style={styles.header}>
         <Pressable
           accessibilityRole="button"
@@ -199,12 +199,10 @@ const styles = StyleSheet.create({
     width: "100%",
     maxWidth: 640,
     alignSelf: "center",
-    borderRadius: radius.xl,
-    overflow: "hidden",
-    borderWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  photos: { paddingTop: spacing.md, paddingHorizontal: spacing.md },
-  photoClip: { borderRadius: radius.lg, overflow: "hidden" },
+  photos: { paddingTop: spacing.md, paddingHorizontal: spacing.lg },
+  photoClip: { borderRadius: radius.xl, overflow: "hidden" },
   header: {
     flexDirection: "row",
     alignItems: "center",

@@ -113,3 +113,16 @@ Theme module and components under `src/theme` and `src/ui`; auth screens under `
 - Not built: **profile photo at sign-up.** A photo other students can see needs moderator tooling to review and remove it, a data protection impact assessment update, and serving rules, which belong with milestone M3. Until then the profile shows initials.
 - Not reachable yet: pending approval (open decision 3).
 - Not changed: package ids, URL scheme and database name still use the old working name.
+
+## Home feed (2026-10-15)
+
+The feed follows the sign-in language: calm, tinted ground, Figtree, near-black actions.
+
+- Top bar: the logomark and app name on the left, a circular bell on the right.
+- Writing prompt: an input-styled row (hairline border, card surface) with the posting avatar, the placeholder "What is on your mind?" and a `ProfileChip` reading "Posting as you" or "Posting as anonymous", so the identity that will post is always visible before the composer opens.
+- People you follow: a quiet rail with rounded-square avatars and name pills, hidden on the Following tab and when the student follows nobody.
+- Tabs: three separate pills, the selected one filled near-black like the primary button.
+- Posts: unboxed rows separated by a hairline, not cards. Author line with avatar, name, handle and time; an `IdentityBadge`-style chip with an icon and the words Student, You or Anonymous; text at 16/24; photos lead the text, 22pt rounded and inset; a quiet action row.
+- States: a static skeleton while the first page loads (nothing animates), an empty state with the logomark and a plain sentence, an error notice with Try again.
+- Wide screens: header, prompt, tabs and posts share one centred 640pt column.
+- Not built: the two-disc posting-as switch in the composer, and haptics on like.
