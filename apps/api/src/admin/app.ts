@@ -1,7 +1,7 @@
 import Fastify, { type FastifyRequest } from "fastify";
 import { z, ZodError } from "zod";
 import type { PhotoStore } from "../content/photos.js";
-import { ApiError } from "../errors.js";
+import { ApiError, clientErrorResponse } from "../errors.js";
 import { registerConsole } from "./console.js";
 import { registerRateLimit, registerSecurityHeaders, type RateLimitOptions } from "../security/http.js";
 import type { AdminService } from "./service.js";
@@ -63,6 +63,8 @@ export function buildAdminApp(deps: AdminAppDeps) {
         fields: err.issues.map((i) => i.path.join(".")),
       });
     }
+    const client = clientErrorResponse(err);
+    if (client) return reply.code(client.status).send(client.body);
     app.log.error(err);
     return reply.code(500).send({ error: "internal_error", message: "Something went wrong." });
   });

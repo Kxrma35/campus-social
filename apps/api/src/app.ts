@@ -1,7 +1,7 @@
 import Fastify from "fastify";
 import { ZodError } from "zod";
 import type { AuthService } from "./auth/service.js";
-import { ApiError } from "./errors.js";
+import { ApiError, clientErrorResponse } from "./errors.js";
 import type { AccountService } from "./account/service.js";
 import type { ActorResolver } from "./content/actor.js";
 import type { ContentService } from "./content/service.js";
@@ -53,6 +53,8 @@ export function buildApp(deps: AppDeps) {
         fields: err.issues.map((i) => i.path.join(".")),
       });
     }
+    const client = clientErrorResponse(err);
+    if (client) return reply.code(client.status).send(client.body);
     app.log.error(err);
     return reply.code(500).send({ error: "internal_error", message: "Something went wrong." });
   });

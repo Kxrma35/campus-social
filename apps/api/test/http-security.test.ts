@@ -253,3 +253,59 @@ describe("both services use them", () => {
     expect((await bad()).statusCode).toBe(429);
   });
 });
+
+describe("malformed requests", () => {
+  const student = () =>
+    buildApp({
+      auth: { requestLogin: async () => undefined } as unknown as AuthService,
+      logger: false,
+    });
+
+  it("answers a body that is missing for its content type with 400, not a server error", async () => {
+    const res = await student().inject({
+      method: "POST",
+      url: "/auth/login/request",
+      headers: { "content-type": "application/json" },
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.json()).toEqual({ error: "bad_request", message: "The request could not be read." });
+  });
+
+  it("answers broken JSON with 400 and an oversized body with 413", async () => {
+    const a = student();
+    const broken = await a.inject({
+      method: "POST",
+      url: "/auth/login/request",
+      headers: { "content-type": "application/json" },
+      payload: "{not json",
+    });
+    expect(broken.statusCode).toBe(400);
+
+    const big = await a.inject({
+      method: "POST",
+      url: "/auth/login/request",
+      headers: { "content-type": "application/json" },
+      payload: JSON.stringify({ email: "a@test.ac.ke", pad: "x".repeat(200 * 1024) }),
+    });
+    expect(big.statusCode).toBe(413);
+    expect(big.json().error).toBe("payload_too_large");
+  });
+
+  it("still reports a real fault as a 500 with no detail", async () => {
+    const a = buildApp({
+      auth: {
+        requestLogin: async () => {
+          throw new Error("secret detail");
+        },
+      } as unknown as AuthService,
+      logger: false,
+    });
+    const res = await a.inject({
+      method: "POST",
+      url: "/auth/login/request",
+      payload: { email: "a@test.ac.ke" },
+    });
+    expect(res.statusCode).toBe(500);
+    expect(JSON.stringify(res.json())).not.toContain("secret detail");
+  });
+});
