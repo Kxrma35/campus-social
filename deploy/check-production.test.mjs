@@ -135,6 +135,17 @@ test("draft legal text and empty helplines block a launch but only warn in a clo
   assert.equal(r.warnings.filter((w) => /TERMS_VERSION|SUPPORT_RESOURCES_JSON/.test(w)).length, 2);
 });
 
+test("a helpline entry without a name or contact is refused", () => {
+  assert.match(
+    problemsOf((c) => (c.api.SUPPORT_RESOURCES_JSON = JSON.stringify([{ name: "Line", contact: "" }]))),
+    /non-empty "name" and "contact"/,
+  );
+  assert.match(
+    problemsOf((c) => (c.api.SUPPORT_RESOURCES_JSON = JSON.stringify([{ contact: "1192" }]))),
+    /non-empty "name" and "contact"/,
+  );
+});
+
 test("a closed test still refuses a security problem", () => {
   const c = good();
   c.api.NODE_ENV = "development";

@@ -193,6 +193,12 @@ export function check({ api, admin, closedTest = false }) {
   }
   if (!Array.isArray(resources) || resources.length === 0) {
     legal("SUPPORT_RESOURCES_JSON is empty: no confirmed counselling or helpline details will be shown after a flagged post.");
+  } else if (
+    resources.some(
+      (r) => !r || typeof r.name !== "string" || !r.name.trim() || typeof r.contact !== "string" || !r.contact.trim(),
+    )
+  ) {
+    problems.push('Every entry in SUPPORT_RESOURCES_JSON needs a non-empty "name" and "contact".');
   }
 
   // The admin service holds less: never the encryption key.

@@ -72,7 +72,7 @@ Never commit real values. Generate secrets with `openssl rand -base64 48` (the c
 | `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | unset | Set both or neither. Neither means the platform's own credential chain (for example an instance role), which is preferable on AWS. |
 | `S3_KEY_PREFIX` | unset | Optional folder inside the bucket. Empty, or ending in `/`. |
 | `TERMS_VERSION` | `draft-0` | Stored with each acceptance. Bump it when the terms change. |
-| `SUPPORT_RESOURCES_JSON` | `[]` | JSON array of `{"name": "...", "contact": "..."}` shown to a student whose post is flagged as a possible crisis. Leave empty until the numbers are confirmed with USIU counselling and a national helpline; nothing is hard-coded. |
+| `SUPPORT_RESOURCES_JSON` | `[]` | JSON array of `{"name": "...", "contact": "..."}` shown to a student whose post is flagged as a possible crisis. `deploy/env.api.example` carries four national lines checked against each organisation's page on 2026-10-15; call each before launch and add the USIU Counseling Center (see `docs/helplines.md`). Nothing is hard-coded. |
 | `DEV_CORS_ORIGIN` | unset | **Development only.** One browser origin allowed to call the API (for the web preview of the app). Refused when `NODE_ENV=production`. |
 
 ### Rate limits and headers
@@ -326,7 +326,7 @@ Design rules worth knowing:
 
 Known limits:
 - **Phrase matching is crude.** It misses indirect wording, slang, misspellings and other languages, and it flags quotes and lyrics. It supplements human reports; it does not replace them. Review the phrase list with USIU counselling staff before launch.
-- **Helpline details are unconfirmed.** `SUPPORT_RESOURCES_JSON` is empty until real numbers are confirmed, so flagged authors currently see a message without contact details.
+- **Helpline details are checked but not yet confirmed by a call.** The deployment example lists four national lines (see `docs/helplines.md`). The USIU Counseling Center has no public contact and still needs adding. With an empty list a flagged author sees a message and "contact your local emergency services", with no numbers.
 - **Anonymous profiles and moderation:** penalties and reports for anonymous profiles go through the blind index. They need the link keys, so without them they return `501` (see M4).
 - **Bans and anonymous content.** Banning from a known profile hides the known profile's content, but the anonymous profile's id is encrypted, so its content is not hidden until M4 can resolve it. The same gap applies to restoring it on an upheld appeal.
 - **Moderator tokens are bearer secrets** with no expiry or second factor. Fine for a small founding team behind a VPN; revisit before adding staff.

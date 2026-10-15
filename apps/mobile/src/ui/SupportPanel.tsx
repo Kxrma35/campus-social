@@ -20,7 +20,7 @@ export function SupportPanel({ support, onDone }: { support: SupportInfo; onDone
         <View key={r.name} style={{ gap: spacing.xs }}>
           <Text variant="label">{r.name}</Text>
           <Text>{r.contact}</Text>
-          {/^\+?[\d\s()-]{6,}$/.test(r.contact) ? (
+          {/^\+?[\d\s()-]{3,}$/.test(r.contact) ? (
             <Button
               variant="secondary"
               label={`Call ${r.name}`}
