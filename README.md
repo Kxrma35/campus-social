@@ -75,6 +75,34 @@ Never commit real values. Generate secrets with `openssl rand -base64 48` (the c
 | `SUPPORT_RESOURCES_JSON` | `[]` | JSON array of `{"name": "...", "contact": "..."}` shown to a student whose post is flagged as a possible crisis. Leave empty until the numbers are confirmed with USIU counselling and a national helpline; nothing is hard-coded. |
 | `DEV_CORS_ORIGIN` | unset | **Development only.** One browser origin allowed to call the API (for the web preview of the app). Refused when `NODE_ENV=production`. |
 
+### Rate limits and headers
+
+Every response carries `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, `X-Frame-Options: DENY`, a `default-src 'none'` content security policy and `Cache-Control: no-store` (photos and the moderator console set their own). In production `Strict-Transport-Security` is added.
+
+Requests are counted in the process's memory, in these classes:
+
+| Class | Counted per | Default | Applies to |
+|---|---|---|---|
+| Sign-in | **address** | 100 per 10 minutes | `POST /auth/*` and `POST /appeals/*`, which have no session yet |
+| Writes | **session** | 120 per minute | Other `POST`, `PUT`, `PATCH` and `DELETE` |
+| Reads | **session** | 600 per minute | `GET` |
+| Uploads | **session** | 60 per hour | `POST /photos` |
+| Bad tokens | **address** | 60 per 10 minutes (20 on the admin service) | Repeated `401` responses |
+
+Signed-in traffic is counted per session, not per address, because a campus network puts many students behind one address. Over a limit, the answer is `429` with a `Retry-After`; `/health` and the console page are never limited.
+
+| Variable | Default | What it does |
+|---|---|---|
+| `RATE_LIMIT` | `on` | `off` disables limiting (tests, or when a gateway does it). |
+| `RATE_LIMIT_AUTH_PER_10_MIN` | `100` | Sign-in requests per address. |
+| `RATE_LIMIT_WRITE_PER_MIN` | `120` | Writes per session. |
+| `RATE_LIMIT_READ_PER_MIN` | `600` | Reads per session. |
+| `RATE_LIMIT_UPLOAD_PER_HOUR` | `60` | Photo uploads per session. |
+| `RATE_LIMIT_FAILED_AUTH_PER_10_MIN` | `60` | Rejected tokens per address before it is throttled. |
+| `TRUST_PROXY_HOPS` | `0` | How many reverse proxies sit in front, so the real client address is read from `X-Forwarded-For`. **Set it to exactly the number of proxies you run. If it is above zero with no proxy, anyone can forge their address and escape the limits; if it is zero behind a proxy, every student shares the proxy's address and the sign-in limit hits them together.** |
+
+Limits are **per process**: with several API instances each keeps its own count, so the effective limit is higher. They protect against abuse from one source and against token guessing; they are not a substitute for the per-address and per-account limits already in the database for one-time codes.
+
 ### Sign-in codes and sessions
 
 | Variable | Default | What it does |

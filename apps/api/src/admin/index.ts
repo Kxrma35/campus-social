@@ -22,6 +22,20 @@ const app = buildAdminApp({
     blindIndexFor: blind ? (id) => blind.indexFor(id) : undefined,
   }),
   photos: photoStore,
+  http: {
+    production: config.NODE_ENV === "production",
+    trustProxyHops: config.TRUST_PROXY_HOPS,
+    rateLimit:
+      config.RATE_LIMIT === "off"
+        ? false
+        : {
+            authPer10Min: config.RATE_LIMIT_AUTH_PER_10_MIN,
+            writePerMin: config.RATE_LIMIT_WRITE_PER_MIN,
+            readPerMin: config.RATE_LIMIT_READ_PER_MIN,
+            uploadPerHour: config.RATE_LIMIT_UPLOAD_PER_HOUR,
+            failedAuthPer10Min: 20,
+          },
+  },
 });
 
 app.listen({ port: config.ADMIN_PORT, host: config.HOST }).catch((err) => {

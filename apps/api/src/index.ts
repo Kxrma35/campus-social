@@ -106,7 +106,27 @@ const content = config.CONTENT_DATABASE_URL
     })()
   : undefined;
 
-const app = buildApp({ auth, account, content, identity, profile: new ProfileService(auth, authStore) });
+const app = buildApp({
+  auth,
+  account,
+  content,
+  identity,
+  profile: new ProfileService(auth, authStore),
+  http: {
+    production: config.NODE_ENV === "production",
+    trustProxyHops: config.TRUST_PROXY_HOPS,
+    rateLimit:
+      config.RATE_LIMIT === "off"
+        ? false
+        : {
+            authPer10Min: config.RATE_LIMIT_AUTH_PER_10_MIN,
+            writePerMin: config.RATE_LIMIT_WRITE_PER_MIN,
+            readPerMin: config.RATE_LIMIT_READ_PER_MIN,
+            uploadPerHour: config.RATE_LIMIT_UPLOAD_PER_HOUR,
+            failedAuthPer10Min: config.RATE_LIMIT_FAILED_AUTH_PER_10_MIN,
+          },
+  },
+});
 if (config.DEV_CORS_ORIGIN) {
   if (config.NODE_ENV === "production") {
     throw new Error("DEV_CORS_ORIGIN must not be set in production");

@@ -3,6 +3,7 @@ import { z, ZodError } from "zod";
 import type { PhotoStore } from "../content/photos.js";
 import { ApiError } from "../errors.js";
 import { registerConsole } from "./console.js";
+import { registerRateLimit, registerSecurityHeaders, type RateLimitOptions } from "../security/http.js";
 import type { AdminService } from "./service.js";
 import type { Moderator } from "./store.js";
 
@@ -37,12 +38,19 @@ export interface AdminAppDeps {
   admin: AdminService;
   photos: PhotoStore;
   logger?: boolean;
+  http?: { production?: boolean; trustProxyHops?: number; rateLimit?: RateLimitOptions | false };
 }
 
 export function buildAdminApp(deps: AdminAppDeps) {
+  const hops = deps.http?.trustProxyHops ?? 0;
   const app = Fastify({
     logger: deps.logger === false ? false : { redact: ["req.headers.authorization"] },
+    trustProxy: hops > 0 ? (_address: string, hop: number) => hop < hops : false,
+    bodyLimit: 100 * 1024,
   });
+
+  registerSecurityHeaders(app, { production: deps.http?.production ?? false });
+  if (deps.http?.rateLimit) registerRateLimit(app, deps.http.rateLimit);
 
   app.setErrorHandler((err, _req, reply) => {
     if (err instanceof ApiError) {

@@ -13,6 +13,7 @@ import { registerAuthRoutes } from "./routes/auth.js";
 import { registerContentRoutes } from "./routes/content.js";
 import { registerIdentityRoutes } from "./routes/identity.js";
 import { registerProfileRoutes } from "./routes/profile.js";
+import { registerRateLimit, registerSecurityHeaders, type RateLimitOptions } from "./security/http.js";
 
 export interface AppDeps {
   auth: AuthService;
@@ -21,12 +22,25 @@ export interface AppDeps {
   identity?: IdentityService;
   profile?: ProfileService;
   logger?: boolean;
+  http?: HttpHardening;
+}
+
+export interface HttpHardening {
+  production?: boolean;
+  trustProxyHops?: number;
+  rateLimit?: RateLimitOptions | false;
 }
 
 export function buildApp(deps: AppDeps) {
+  const hops = deps.http?.trustProxyHops ?? 0;
   const app = Fastify({
     logger: deps.logger === false ? false : { redact: ["req.headers.authorization"] },
+    trustProxy: hops > 0 ? (_address: string, hop: number) => hop < hops : false,
+    bodyLimit: 100 * 1024,
   });
+
+  registerSecurityHeaders(app, { production: deps.http?.production ?? false });
+  if (deps.http?.rateLimit) registerRateLimit(app, deps.http.rateLimit);
 
   app.setErrorHandler((err, _req, reply) => {
     if (err instanceof ApiError) {

@@ -65,6 +65,13 @@ const schema = z.object({
   REVERIFY_REMINDER_DAYS: dayList(365).default("30,7"),
   CLOSURE_REMINDER_DAYS: dayList(60).default("7"),
   REMINDER_MAX_PER_RUN: z.coerce.number().int().min(1).max(5000).default(500),
+  TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(0),
+  RATE_LIMIT: z.enum(["on", "off"]).default("on"),
+  RATE_LIMIT_AUTH_PER_10_MIN: z.coerce.number().int().min(1).default(100),
+  RATE_LIMIT_WRITE_PER_MIN: z.coerce.number().int().min(1).default(120),
+  RATE_LIMIT_READ_PER_MIN: z.coerce.number().int().min(1).default(600),
+  RATE_LIMIT_UPLOAD_PER_HOUR: z.coerce.number().int().min(1).default(60),
+  RATE_LIMIT_FAILED_AUTH_PER_10_MIN: z.coerce.number().int().min(1).default(60),
 });
 
 export type Config = z.infer<typeof schema>;
