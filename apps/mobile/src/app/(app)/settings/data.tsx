@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { describeError } from "@/core/lib/errors";
 import { checkCode } from "@/core/lib/validation";
 import { shareJson } from "@/core/exportFile";
@@ -7,13 +7,16 @@ import { useSession } from "@/core/session/SessionProvider";
 import { spacing } from "@/theme/tokens";
 import { Button } from "@/ui/Button";
 import { Checkbox } from "@/ui/Checkbox";
+import { InlineError } from "@/ui/InlineError";
 import { Notice } from "@/ui/Notice";
-import { Screen } from "@/ui/Screen";
+import { OtpInput } from "@/ui/OtpInput";
+import { SettingsPage } from "@/ui/SettingsPage";
 import { Text } from "@/ui/Text";
-import { TextField } from "@/ui/TextField";
+import { useTheme } from "@/ui/theme";
 
 export default function DataScreen() {
   const { api, signOut } = useSession();
+  const t = useTheme();
 
   const [exporting, setExporting] = useState(false);
   const [exportMsg, setExportMsg] = useState<string | null>(null);
@@ -31,7 +34,7 @@ export default function DataScreen() {
     setExportMsg(null);
     try {
       const data = await api.exportData();
-      const result = await shareJson("campus-social-data.json", data);
+      const result = await shareJson("moku-data.json", data);
       setExportMsg(
         result === "shared"
           ? "Your data is ready. Keep the file private."
@@ -76,7 +79,7 @@ export default function DataScreen() {
   }
 
   return (
-    <Screen>
+    <SettingsPage>
       <View style={{ gap: spacing.sm }}>
         <Text variant="heading">Download your data</Text>
         <Text>
@@ -89,10 +92,18 @@ export default function DataScreen() {
         </Notice>
         <Button label="Download my data" onPress={download} busy={exporting} testID="download-data" />
         {exportMsg ? <Notice tone="success">{exportMsg}</Notice> : null}
-        {exportErr ? <Notice tone="error">{exportErr}</Notice> : null}
+        {exportErr ? <InlineError>{exportErr}</InlineError> : null}
       </View>
 
-      <View style={{ gap: spacing.sm }}>
+      <View
+        style={{
+          gap: spacing.sm,
+          marginTop: spacing.md,
+          paddingTop: spacing.xl,
+          borderTopWidth: StyleSheet.hairlineWidth,
+          borderTopColor: t.hairline,
+        }}
+      >
         <Text variant="heading">Close your account</Text>
         <Text>
           Your profiles and everything you posted disappear from view straight away. About 30 days
@@ -121,12 +132,14 @@ export default function DataScreen() {
           </>
         ) : (
           <>
-            <TextField
+            <Text variant="small" tone="muted">
+              Enter the 6-digit code we emailed you.
+            </Text>
+            <OtpInput
               label="6-digit code from your email"
               value={code}
-              onChangeText={setCode}
-              keyboardType="number-pad"
-              maxLength={7}
+              onChange={setCode}
+              error={Boolean(closeErr)}
               testID="close-code"
             />
             <Button
@@ -138,8 +151,8 @@ export default function DataScreen() {
             />
           </>
         )}
-        {closeErr ? <Notice tone="error">{closeErr}</Notice> : null}
+        {closeErr ? <InlineError>{closeErr}</InlineError> : null}
       </View>
-    </Screen>
+    </SettingsPage>
   );
 }

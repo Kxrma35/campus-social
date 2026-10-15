@@ -1,10 +1,15 @@
 import { useEffect, useState } from "react";
+import { View } from "react-native";
 import { describeError } from "@/core/lib/errors";
 import { checkCourse, checkName, checkStudyYear } from "@/core/lib/validation";
 import { useSession } from "@/core/session/SessionProvider";
+import { spacing } from "@/theme/tokens";
+import { Avatar } from "@/ui/Avatar";
 import { Button } from "@/ui/Button";
+import { InlineError } from "@/ui/InlineError";
+import { ProfileChip } from "@/ui/ProfileChip";
 import { Notice } from "@/ui/Notice";
-import { Screen } from "@/ui/Screen";
+import { SettingsPage } from "@/ui/SettingsPage";
 import { Text } from "@/ui/Text";
 import { TextField } from "@/ui/TextField";
 
@@ -62,22 +67,31 @@ export default function EditProfile() {
   }
 
   return (
-    <Screen>
-      <Text tone="muted">
-        This is your known profile. Your name and course are shown to other students at your campus.
-        If you change your name, your @handle changes to match.
+    <SettingsPage>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
+        <Avatar kind="known" name={name} size="lg" />
+        <View style={{ flex: 1, gap: spacing.xs }}>
+          <ProfileChip kind="known" self />
+          <Text variant="small" tone="muted">
+            Your name and course are shown to other students at your campus.
+          </Text>
+        </View>
+      </View>
+      <Text variant="small" tone="muted">
+        If your handle was made from your name, it changes when you change your name. A handle you
+        chose yourself stays as it is.
       </Text>
       <TextField label="Your name" value={name} onChangeText={setName} error={errors.name} testID="edit-name" />
       <TextField label="Course" value={course} onChangeText={setCourse} error={errors.course} testID="edit-course" />
       <TextField label="Year of study" value={year} onChangeText={setYear} keyboardType="number-pad"
         maxLength={1} error={errors.year} testID="edit-year" />
-      {formError ? <Notice tone="error">{formError}</Notice> : null}
+      {formError ? <InlineError>{formError}</InlineError> : null}
       {saved ? <Notice tone="success">Saved.</Notice> : null}
       <Button label="Save changes" onPress={save} busy={busy} disabled={!loaded} testID="save-profile" />
       <Notice title="Your email address and date of birth">
         These cannot be changed here, because they are how we know you are a current student aged 18
         or over. To correct either one, contact us using the details in the privacy policy.
       </Notice>
-    </Screen>
+    </SettingsPage>
   );
 }

@@ -6,11 +6,13 @@ import { describeError } from "@/core/lib/errors";
 import { useIdentity } from "@/core/session/IdentityProvider";
 import { useSession } from "@/core/session/SessionProvider";
 import { spacing } from "@/theme/tokens";
+import { Avatar } from "@/ui/Avatar";
 import { Button } from "@/ui/Button";
+import { InlineError } from "@/ui/InlineError";
 import { Checkbox } from "@/ui/Checkbox";
 import { Notice } from "@/ui/Notice";
 import { ProfileChip } from "@/ui/ProfileChip";
-import { Screen } from "@/ui/Screen";
+import { SettingsPage } from "@/ui/SettingsPage";
 import { Text } from "@/ui/Text";
 import { shortDate } from "@/core/lib/time";
 
@@ -33,9 +35,9 @@ export default function AnonymousSettings() {
 
   if (!profiles) {
     return (
-      <Screen>
+      <SettingsPage>
         <Text tone="muted">Loading…</Text>
-      </Screen>
+      </SettingsPage>
     );
   }
 
@@ -59,9 +61,14 @@ export default function AnonymousSettings() {
   if (profiles.anonymous || created) {
     const handle = profiles.anonymous?.handle ?? created;
     return (
-      <Screen>
-        <ProfileChip kind="anonymous" self />
-        <Text variant="title">{`@${handle}`}</Text>
+      <SettingsPage>
+        <View style={{ alignItems: "center", gap: spacing.md }}>
+          <Avatar kind="anonymous" name={handle} size="xl" />
+          <Text variant="title">{`@${handle}`}</Text>
+          <View style={{ alignSelf: "center" }}>
+            <ProfileChip kind="anonymous" self />
+          </View>
+        </View>
         <Text>
           This is your anonymous profile. Choose it when you post, comment or react, and the app
           will always tell you which profile you are using.
@@ -70,12 +77,12 @@ export default function AnonymousSettings() {
         <Text tone="muted">
           It does not stop someone recognising how you write, and it cannot stop a screenshot.
         </Text>
-      </Screen>
+      </SettingsPage>
     );
   }
 
   return (
-    <Screen>
+    <SettingsPage>
       <Text variant="heading">Add an anonymous profile</Text>
       <Text>
         An anonymous profile lets you post under a generated name that is not linked to you in the
@@ -107,7 +114,7 @@ export default function AnonymousSettings() {
       ) : (
         <Notice title="Not available">{LOCKED[eligibility.status] ?? "Not available right now."}</Notice>
       )}
-      {error ? <Notice tone="error">{error}</Notice> : null}
-    </Screen>
+      {error ? <InlineError>{error}</InlineError> : null}
+    </SettingsPage>
   );
 }

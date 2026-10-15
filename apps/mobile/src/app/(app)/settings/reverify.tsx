@@ -5,7 +5,7 @@ import { checkCode } from "@/core/lib/validation";
 import { useSession } from "@/core/session/SessionProvider";
 import { Button } from "@/ui/Button";
 import { Notice } from "@/ui/Notice";
-import { Screen } from "@/ui/Screen";
+import { SettingsPage } from "@/ui/SettingsPage";
 import { Text } from "@/ui/Text";
 import { InlineError } from "@/ui/InlineError";
 import { OtpInput } from "@/ui/OtpInput";
@@ -52,17 +52,17 @@ export default function Reverify() {
 
   if (done) {
     return (
-      <Screen>
+      <SettingsPage>
         <Notice tone="success" title="Thank you">
           Your email is confirmed for another year.
         </Notice>
         <Button label="Back" onPress={() => router.back()} />
-      </Screen>
+      </SettingsPage>
     );
   }
 
   return (
-    <Screen>
+    <SettingsPage>
       <Text>
         Once a year we ask you to confirm your university email so only current students stay on
         Moku. We send a six-digit code to your university address.
@@ -80,6 +80,6 @@ export default function Reverify() {
         You will not be able to confirm. Download your data before your account closes, from
         Settings.
       </Notice>
-    </Screen>
+    </SettingsPage>
   );
 }

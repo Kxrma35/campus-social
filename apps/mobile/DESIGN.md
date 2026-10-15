@@ -148,3 +148,11 @@ The feed follows the sign-in language: calm, tinted ground, Figtree, near-black 
 - Me: the same header on the left, then the profile, anonymous and settings rows as rounded rows, and Sign out as a secondary button.
 - Settings: three groups with plain headings (Your profiles, Your account, About), rows as rounded rows, Sign out at the bottom. The "working title" line was removed now the name is decided.
 - All three share the 640pt column used by the feed and the post detail.
+
+## Settings sub-screens (2026-10-15)
+
+- One frame for all of them, `SettingsPage`: the 640pt column with even padding and gaps, so they line up with the feed and the settings list.
+- Edit profile: an avatar and the identity chip lead, then the fields. The note about handles now says a handle made from your name changes with it and a handle you chose stays.
+- Anonymous profile: a large avatar with the two-circle mark, the handle, the chip, then the plain statement of what anonymous does and does not mean. Creating one still needs the read-and-understand tick.
+- Your data: download and close account are separated by a hairline; the close flow uses the six-box code input and inline errors, and the downloaded file is named `moku-data.json`.
+- Confirm your email and Policies use the same frame; confirm reuses the code input.
