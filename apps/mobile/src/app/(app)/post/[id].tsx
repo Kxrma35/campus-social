@@ -11,6 +11,7 @@ import { useReactions } from "@/core/useReactions";
 import { spacing } from "@/theme/tokens";
 import { Button } from "@/ui/Button";
 import { CommentItem } from "@/ui/CommentItem";
+import { EmptyState } from "@/ui/EmptyState";
 import { FeedSkeleton } from "@/ui/FeedSkeleton";
 import { Notice } from "@/ui/Notice";
 import { PhotoDescriptions } from "@/ui/PhotoDescriptions";
@@ -207,7 +208,9 @@ export default function PostScreen() {
 
         <View style={styles.pad}>
           {comments.items.length === 0 && comments.state === "ready" ? (
-            <Text tone="muted">No comments yet. Be the first to reply.</Text>
+            <EmptyState compact title="No comments yet">
+              Be the first to reply.
+            </EmptyState>
           ) : null}
           {comments.items.map((c) => (
             <CommentItem

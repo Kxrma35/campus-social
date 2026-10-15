@@ -11,6 +11,7 @@ import { spacing } from "@/theme/tokens";
 import { Avatar } from "@/ui/Avatar";
 import { Button } from "@/ui/Button";
 import { Column } from "@/ui/Column";
+import { EmptyState } from "@/ui/EmptyState";
 import { Loading } from "@/ui/Loading";
 import { Notice } from "@/ui/Notice";
 import { PostCard } from "@/ui/PostCard";
@@ -154,9 +155,15 @@ export default function ProfileScreen() {
         <View style={{ padding: spacing.lg, paddingBottom: spacing.sm }}>
           <Text variant="heading">Posts</Text>
           {posts.items.length === 0 && posts.state === "ready" ? (
-            <Text tone="muted" style={{ paddingTop: spacing.sm }}>
-              No posts yet.
-            </Text>
+            <EmptyState
+              compact
+              title={profile.isSelf ? "You have not posted yet" : "No posts yet"}
+              action={
+                profile.isSelf ? (
+                  <Button label="Write a post" onPress={() => router.push("/compose")} />
+                ) : undefined
+              }
+            />
           ) : null}
         </View>
         <View>

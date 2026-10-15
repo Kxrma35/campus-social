@@ -229,9 +229,18 @@ export default function FeedScreen() {
             <Button label="Try again" onPress={list.reload} />
           </View>
         ) : (
-          <EmptyState title={tab === "following" ? "Nothing here yet" : "No posts yet"}>
+          <EmptyState
+            title={tab === "following" ? "Nothing here yet" : "No posts yet"}
+            action={
+              tab === "following" ? (
+                <Button variant="secondary" label="See the newest posts" onPress={() => setTab("newest")} />
+              ) : (
+                <Button label="Write a post" onPress={() => router.push("/compose")} />
+              )
+            }
+          >
             {tab === "following"
-              ? "Follow people to see their posts in this tab."
+              ? "Follow people from their profiles and their posts will show up here."
               : "Be the first to write one."}
           </EmptyState>
         )

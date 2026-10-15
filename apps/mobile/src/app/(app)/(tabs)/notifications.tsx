@@ -12,6 +12,7 @@ import { ActingSwitcher } from "@/ui/ActingSwitcher";
 import { Avatar } from "@/ui/Avatar";
 import { Button } from "@/ui/Button";
 import { Loading } from "@/ui/Loading";
+import { EmptyState } from "@/ui/EmptyState";
 import { Notice } from "@/ui/Notice";
 import { authorTitle } from "@/ui/PostCard";
 import { Text } from "@/ui/Text";
@@ -98,9 +99,11 @@ export default function NotificationsScreen() {
             <Button label="Try again" onPress={list.reload} />
           </View>
         ) : (
-          <View style={{ padding: spacing.lg }}>
-            <Text tone="muted">Nothing yet. You will see replies, likes and new followers here.</Text>
-          </View>
+          <EmptyState title="No notifications yet">
+            {acting === "anonymous"
+              ? "Replies, likes and new followers for your anonymous profile will show up here. Your known profile has its own."
+              : "Replies, likes and new followers will show up here."}
+          </EmptyState>
         )
       }
     />

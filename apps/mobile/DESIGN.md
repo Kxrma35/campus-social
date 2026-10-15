@@ -162,3 +162,14 @@ The feed follows the sign-in language: calm, tinted ground, Figtree, near-black 
 - Liking a post or a comment gives a short light tap; removing a like gives a lighter selection tick. Nothing else vibrates.
 - It is fire and forget: a device without haptics, or one that rejects the call, still likes normally, and nothing is stored or sent anywhere. The web preview does nothing.
 - The visual like pop still honours Reduce Motion; the haptic does not depend on it, because the system's own vibration setting governs it.
+
+## Empty states (2026-10-15)
+
+One `EmptyState` component: the logomark, a heading, one plain sentence and, where there is a sensible next step, one button. A `compact` form drops the mark for an empty section inside a busier screen.
+
+- Feed (Newest, Top this week): "No posts yet. Be the first to write one." with Write a post.
+- Following: "Nothing here yet. Follow people from their profiles and their posts will show up here." with See the newest posts, which switches the tab back.
+- Notifications: "No notifications yet" and what will show up; on the anonymous profile it adds that the known profile has its own.
+- Profile: your own empty profile says "You have not posted yet" with Write a post; someone else's says "No posts yet" with no button.
+- Post comments: compact, "No comments yet. Be the first to reply."
+- Errors and loading are separate: errors keep a notice with Try again, loading uses the static skeleton.

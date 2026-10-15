@@ -676,7 +676,7 @@ describe("feed", () => {
     expect(screen.getByLabelText("Newest, 1 of 3").props.accessibilityState.selected).toBe(true);
     await fireEvent.press(screen.getByLabelText("Following, 3 of 3"));
     await waitFor(() => expect(f.calls.some((c) => c.path.startsWith("/feed/following"))).toBe(true));
-    expect(await screen.findByText(/Follow people to see their posts/)).toBeTruthy();
+    expect(await screen.findByText(/their posts will show up here/)).toBeTruthy();
     expect(screen.getByLabelText("Following, 3 of 3").props.accessibilityState.selected).toBe(true);
     expect(screen.getByLabelText("Newest, 1 of 3").props.accessibilityState.selected).toBe(false);
   });
