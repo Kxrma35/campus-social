@@ -15,7 +15,7 @@ The server and app are built and tested: sign-up with university email, posting,
 | # | Decision | Recommendation | Who decides | Blocks |
 |---|---|---|---|---|
 | 1 | **Who is the data controller** (legal entity, address, contacts, data protection contact) | A named, registered body. Not an individual's personal name | Project owner, with counsel | Policies, contracts, registration, sending domain |
-| 2 | **Hosting provider and region** | Managed Postgres in an African or EU region with a documented transfer basis; link keys in the provider's secret store | Controller, counsel confirms transfer safeguards | Processor contracts, policy wording, launch |
+| 2 | **Hosting provider and region** | **Direction chosen 2026-10-15: a host with its data centre in Nairobi, so hosting is not a transfer out of Kenya. Provider not chosen yet; use `deploy/HOSTING.md` to shortlist.** Link keys stay off the database host. | Controller; counsel confirms the processor contract and any registration duty | Processor contracts, policy wording, launch |
 | 3 | **When may an anonymous profile be unmasked** | Court orders and a short listed set of serious-harm cases only. Disciplinary cases excluded. Two named approvers | Controller, counsel, USIU | The "unmasking" section of the privacy policy |
 | 4 | **Staff vs student email domains** | Inspect real address patterns; if staff share the domain, use manual approval or ambassador vouching for the closed test | Project owner with USIU IT | Who can sign up |
 | 5 | **Moderation coverage and appeals** | Named people for nights and exam periods; a fixed appeal deadline | Controller, USIU student affairs | Safe operation; ban and appeal terms |

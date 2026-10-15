@@ -21,7 +21,7 @@ Prove that students at one campus (USIU-Africa) will post regularly when the aud
 
 | # | Question | Recommendation | Owner |
 |---|---|---|---|
-| 1 | Hosting provider and region | Choose a provider with documentable transfer safeguards (Kenya DPA 2019) | karma |
+| 1 | Hosting provider and region | Direction chosen 2026-10-15: host in Nairobi. Provider still to choose, see `deploy/HOSTING.md` | karma |
 | 2 | Team, moderators, legal entity details | Needed for legal pages; do not invent | karma |
 | 3 | Staff vs student emails at USIU | Inspect real email patterns; fall back to manual approval or ambassador vouching for the closed test | karma |
 | 4 | Graduates | Close account + data export in V1 | decided in plan, confirm |

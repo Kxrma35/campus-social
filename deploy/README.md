@@ -56,6 +56,8 @@ Check the API with `curl http://127.0.0.1:3000/health`.
 - **There is no automatic restart or schedule.** `restart` is `"no"` by design; set it per your platform if you want it.
 - **Migrations only move forward.** There is no rollback; restore from backup instead.
 
+Choosing where to host: see `HOSTING.md` (the chosen direction is a data centre in Nairobi, provider still to be chosen), and `../docs/helplines.md` for the crisis support numbers.
+
 ## Checking the configuration before you start
 
 ```bash
