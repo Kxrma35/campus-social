@@ -1,6 +1,6 @@
 # Key custody, backup and restore runbook
 
-> **DRAFT v0.1.** Written 2026-10-12 against the system as built. Hosting is not chosen, so the storage steps say what the **requirement** is, not which product to use. Blanks are for you to fill in; do not invent them.
+> **DRAFT v0.1.** Written 2026-10-12 against the system as built. The hosting direction is a Nairobi data centre but no provider is chosen, so the storage steps say what the **requirement** is, not which product to use. Blanks are for you to fill in; do not invent them.
 >
 > **G7 in `legal/DPIA.md` is not closed by this document. It is closed by running the restore drill in section 6 and recording the result.** A backup that has never been restored is a hope, not a backup.
 
@@ -28,7 +28,7 @@ The opposite risk is equally serious: if the keys are exposed together with a da
 
 ## 3. Rules for custody
 
-These are requirements. How you meet them depends on the host you choose. **[Record, once hosting is chosen, where each one actually lives.]**
+These are requirements. How you meet them depends on the host you choose (see `deploy/HOSTING.md`). **[Record, once the provider is chosen, where each one actually lives.]**
 
 1. **Never in the repository, the database, the backups of the database, a chat, or an email.** Not even once "temporarily". This is the one rule with no exceptions.
 2. **Never in the same backup set, the same storage account, or the same credentials as the database backups.** If one theft yields both, the encryption achieves nothing.
@@ -38,6 +38,7 @@ These are requirements. How you meet them depends on the host you choose. **[Rec
 6. **A written record of custody**: who holds a copy, where, since when. Update it whenever a person leaves or a copy moves. (Template in Appendix B.)
 7. **When a custodian leaves, rotate** (section 7) and remove their access the same day.
 8. **Keys are generated on a trusted machine** and never typed into a web form, a ticket or a terminal on a shared machine.
+9. **On a single host, the keys and the backups live on different machines or accounts.** The scheduled backup (`deploy/schedule/run-backup.sh`) writes to `BACKUP_DIR`: point that at a separate machine or bucket, never a folder on the host that holds `.env.api`.
 
 ## 4. Generating keys
 
@@ -92,6 +93,9 @@ This is what actually closes G7. It simulates the worst day: **the running envir
 ```bash
 # on the backup host, with the database owner connection (never the link keys)
 OWNER_DATABASE_URL=<owner connection> deploy/backup.sh --out /backups --encrypt-to <gpg recipient>
+
+# or let the schedule do it (deploy/schedule/): the same script, plus pruning by BACKUP_KEEP_DAYS,
+# a failure alert, and a staleness alert if it silently stops. Settings live in /etc/moku/jobs.env.
 
 # on the clean drill machine, with the keys as retrieved from the KEY BACKUP (step 2)
 LINK_ENCRYPTION_KEYS=<from backup> LINK_BLIND_INDEX_KEY=<from backup> \
@@ -158,6 +162,8 @@ Needed after exposure of the blind-index key, or on a custodian change. **This h
 
 **The old encryption key must be kept, safely, until every database backup taken before the rotation has aged out.** Those backups still hold links encrypted under the old version. If you destroy the key, restoring one of those backups gives you links you can never open.
 
+With the scheduled backup, "aged out" is a number you chose: `BACKUP_KEEP_DAYS`. The earliest date you may destroy the old key is the rotation date plus `BACKUP_KEEP_DAYS`, and only if pruning has actually been running (check the `backup` job's `last_success` and that the oldest file in `BACKUP_DIR` is within the limit). Do not shorten `BACKUP_KEEP_DAYS` to "finish" a rotation sooner than the backups allow.
+
 - Keep the old key in custody but **remove it from running configuration** once rotation is verified, so a stolen application environment does not contain it.
 - Destroy it only when the oldest backup that could be restored is newer than the rotation. Write the date down.
 
@@ -198,7 +204,7 @@ Both key tools need the **database owner** connection, because the application l
 
 ## 11. Open decisions
 
-- Where each secret actually lives, once hosting is chosen (a managed secret store or key management service is preferable to files).
+- Where each secret actually lives, once the provider is chosen (a managed secret store or key management service is preferable to files).
 - Who the two custodians are, and where the offline copy is kept.
 - Rotation schedule.
 - Whether to move to a key management service so that keys are never present in application memory. That is the strongest fix for the "student API host holds everything" risk (R2 in `legal/DPIA.md`), and it is a hosting decision.

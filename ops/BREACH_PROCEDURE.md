@@ -59,12 +59,13 @@ One person can hold several roles in a small team. What matters is that **each r
 | Purges of the audit log | **Yes** | `identity.lookup_audit_purges`. |
 | Moderator actions and who took them | **Yes** | `moderation.actions`. |
 | Live sessions, when created, optional device label | **Yes** | `sessions`. |
-| Database login failures, unusual queries | **Only if the host provides it** | Not part of this application. [hosting] |
+| Database login failures, unusual queries | **Only if the host provides it** | Not part of this application. Ask the provider (question 3 in `deploy/HOSTING.md`); on a self-run database, turn on PostgreSQL's connection logging. |
 | Server request logs (IP, time, path, status) | **Yes, retention not set** | Authorization header redacted; bodies not logged. [set a period] |
-| **Alerts of any kind** | **No** | Nothing pages anyone. Someone must look. |
+| Scheduled job failed or stopped | **Yes, once the timers are installed** | `deploy/schedule/`: a failure or a job that has not succeeded within its limit alerts the endpoint you set. This is a **health** signal. It is not a security alert. |
+| **Security alerts of any kind** | **No** | Nothing pages anyone about suspicious access. Someone must look. |
 | Who downloaded an export, and when | **No** | Export requests are not logged. |
 | Which moderator viewed which report | **No** | Only actions are recorded, not views. |
-| Who read the key files | **Only if the host provides it** | |
+| Who read the key files | **Only if the host provides it** | On a single Nairobi machine, enable file access auditing for the key file, or keep the keys in the provider's secret store. |
 
 **These gaps matter.** After a suspected breach you may be unable to say who accessed what. Record that honestly in the register instead of guessing. It is also a finding for the post-incident review.
 
@@ -90,9 +91,10 @@ Act in this order: **stop the bleeding, preserve evidence, then fix**. Containme
 
 | Action | How | Why |
 |---|---|---|
-| **Do not run the maintenance job** | Do not run `npm run lifecycle` until told to by the incident lead. | It deletes data, including old records you may need. |
+| **Stop the scheduled jobs** | On the host that runs them: `systemctl stop moku-lifecycle.timer moku-backup.timer` (or comment out the crontab lines). Do not run `npm run lifecycle` until the incident lead says so. | The sweep deletes data, and the backup job **prunes old backups**, so evidence ages out while you investigate. Leave `moku-job-check.timer` running so you are told if something else stops. |
+| **Copy the newest backups aside** | Copy the most recent backups in `BACKUP_DIR` to a separate, access-limited place before any pruning resumes. | A backup may be the only record of how things were before the incident. |
 | **Place legal holds** | `npm run legal-hold -- place --account-email <email> --reason "Incident <ref>" --by "<name>"`, or `--target post:<id>`, or `--audit-case <ref>` | Stops the retention job deleting reports, penalties, appeals and audit rows for the affected accounts and cases. |
-| **Snapshot the database and the logs** | [hosting-specific] | A dated, read-only copy before anything changes. |
+| **Snapshot the database and the logs** | `deploy/backup.sh --out <separate dir> --encrypt-to <recipient>` for the database, a provider snapshot of the disk if offered (ask which, see `deploy/HOSTING.md`), and copy `JOB_STATE_DIR` and the request logs | A dated, read-only copy before anything changes. |
 | **Record the state** | Run the queries in Appendix F and paste results into the register | Counts and times as they were at discovery. |
 
 ### Contain
@@ -105,11 +107,11 @@ Act in this order: **stop the bleeding, preserve evidence, then fix**. Containme
 | Switch anonymous profiles off | Remove `LINK_ENCRYPTION_KEYS` and `LINK_BLIND_INDEX_KEY` from the student API's environment and restart | Acting as an anonymous profile returns `501`. Nobody can post anonymously. Known profiles carry on. The maintenance job skips accounts it cannot resolve. | **Yes** |
 | Stop unmasking | As the database owner: `ALTER ROLE <officer_login> NOLOGIN;` **and then** `SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE usename = '<officer_login>';` | `NOLOGIN` alone does **not** end a session that is already connected. The second statement does. Do both for every `trust_safety` login if misuse is suspected. | **Yes** (SQL) |
 | Stop sign-ups | `UPDATE universities SET active = false WHERE email_domain = '<domain>';` | New sign-ups for that domain are refused. Existing students unaffected. | **Yes** (SQL) |
-| Take the service down | Stop the student API and/or the admin service process | Total. Use when you cannot otherwise stop ongoing access. | **Yes** |
+| Take the service down | `docker compose stop api` and/or `docker compose --profile admin stop admin` in `deploy/`, or stop the process | Total. Use when you cannot otherwise stop ongoing access. | **Yes** |
 | Rotate database passwords | Change each role's password, update secrets, restart | Cuts off anyone holding the old credentials. | **Yes** (manual) |
 | Rotate the link keys | `npm run rotate-keys`, see `ops/KEY_CUSTODY_AND_RESTORE.md` | Use if a key may have been exposed. Needs a maintenance window. | **Yes** |
-| Block an IP, a country, or a bot | Not in the application | Hosting or network layer. [decide who can do this] | **No** |
-| Alert on suspicious access | Not in the application | [hosting] | **No** |
+| Block an IP, a country, or a bot | Not in the application | The host's firewall or the reverse proxy in front of the API. [decide who can do this and how to reach them at night] | **No** |
+| Alert on suspicious access | Not in the application | Nothing built. A provider's monitoring, or a log watcher you add. | **No** |
 
 **Rule of thumb for S1:** revoke all sessions, switch anonymous profiles off, and rotate the keys **before** you finish investigating. The inconvenience is hours. The harm of identification is permanent.
 
@@ -135,7 +137,7 @@ Write down **the decision and the reasons**, whichever way it goes. A decision n
 |---|---|
 | Personal data affected, and is a person likely to be at risk of harm from it? | **Notify the Data Commissioner** within the 72 hours **[counsel to confirm the threshold]** |
 | Is the risk to those people high, for example anonymity broken or identifiers plus content exposed? | **Notify the affected people** directly and without undue delay |
-| Is a processor (hosting, email, push provider) involved, or was it the source? | Notify them, ask for their incident report, and note they may have their own duty to notify you **[counsel to confirm]** |
+| Is a processor involved, or was it the source? The **hosting provider** (once chosen) and the **email provider** (sees every address and sign-in code) are both processors; check each one's contract for its duty to tell you. | Notify them, ask for their incident report, and note they may have their own duty to notify you **[counsel to confirm]** |
 | Is there evidence of a crime, or a threat to someone's safety? | Counsel decides about the police. Safety comes first. |
 | Does the university need to know? | **Controller's decision**, taken with counsel. Do not share personal data of affected students with the university without a lawful basis. |
 
@@ -158,7 +160,7 @@ This is the severe case, so it has its own steps.
 2. **Revoke all sessions, switch anonymous profiles off, rotate keys** (section 5).
 3. **Work out whom it affects individually**, not just a count, so that each person can be told directly. Use the incident register, not email.
 4. **Tell each affected person personally, first**, before any public statement, so they hear it from you and not from a rumour. Tell them what was exposed and what they may want to do (delete posts, change habits, take steps for their safety).
-5. **Offer support.** Name a person they can contact. Know the counselling service's number **[from `SUPPORT_RESOURCES_JSON`, once confirmed]**.
+5. **Offer support.** Name a person they can contact. Know the counselling numbers. The list is in `docs/helplines.md` and `SUPPORT_RESOURCES_JSON`. Check it has been confirmed by a call, and that the USIU Counseling Center entry exists, before you rely on it.
 6. **Watch for harassment.** Ask moderators to look at the queue for retaliation against the affected people, and prioritise it.
 7. **Do not publish names**, and do not confirm to anyone else who is affected.
 8. Counsel decides about the university, the police, and any public statement.
@@ -198,11 +200,11 @@ This is the severe case, so it has its own steps.
 
 These are real. Each makes a breach harder to detect or to scope. They are also tracked in `legal/DPIA.md`.
 
-1. **No alerting.** Nothing tells anyone something is wrong. Detection depends on people looking.
+1. **No security alerting.** Failed or stale scheduled jobs alert (`deploy/schedule/`), but nothing tells anyone about suspicious access. Detection of a breach depends on people looking.
 2. **No access log for exports or for moderators viewing content.** You cannot say who looked at what.
 3. **Request log retention is unset**, and there is no log of database access unless the host provides one.
 4. **The student API host holds both encryption keys and database access.** Compromising it is the S1 case. Mitigations belong to hosting design (secret storage, hardening, ideally a key management service).
-5. **Hosting is undecided**, so backups, snapshots, network controls and the processor's own breach duties are unknown.
+5. **The hosting provider is not chosen** (direction: a Nairobi data centre, see `deploy/HOSTING.md`), so backups, snapshots, network controls and the provider's own breach duties are unknown until you have its answers.
 6. **The court-order unmask path needs only one person.** Misuse is possible and would appear in the audit log only after the fact.
 7. **Key backup and restore drill is not done** (G7). Until it is, "rotate the keys" is untested under pressure.
 
@@ -262,11 +264,11 @@ These are real. Each makes a breach harder to detect or to scope. They are also 
 
 ## Appendix D: Notice to affected people (template)
 
-> **Subject: Important: a security incident affecting your [app name] account**
+> **Subject: Important: a security incident affecting your Moku account**
 >
 > Hello [first name or "student"],
 >
-> We are writing to tell you about a security incident that affected your account on [app name].
+> We are writing to tell you about a security incident that affected your account on Moku.
 >
 > **What happened.** On [date], [plain description in one or two sentences, without jargon].
 >
