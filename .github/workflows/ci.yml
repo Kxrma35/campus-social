@@ -121,6 +121,10 @@ jobs:
         run: |
           bash -n deploy/migrate.sh
           bash -n deploy/set-role-passwords.sh
+          bash -n deploy/backup.sh
+          bash -n deploy/restore.sh
+          bash -n deploy/lib-pg.sh
+          bash -n ops/restore-drill.sh
       - name: Compose file is valid
         working-directory: deploy
         run: |

@@ -51,7 +51,7 @@ openssl rand -base64 32      # one key, 32 bytes, base64
 
 ## 5. Backing up
 
-Do this **before launch, and again after every key change**.
+The **database** is backed up with `deploy/backup.sh` (section 6 shows how). **The keys are not in it, by design.** What follows is about the keys. Do this **before launch, and again after every key change**.
 
 1. Generate or locate the key set.
 2. Write each key to its **two independent protected locations** and to the **offline copy** (section 3).
@@ -84,6 +84,24 @@ This is what actually closes G7. It simulates the worst day: **the running envir
 | 5 | Start the student API against the restored database with the retrieved keys. Sign in as a test account that has an anonymous profile, and act as it. | Works? |
 | 6 | Close the test account that has an anonymous profile, then run the maintenance job (`npm run lifecycle`) against the **restored copy**. It is a throwaway copy, so letting it change data is safe. Confirm it reports `skipped: 0` and that the anonymous profile's content is gone. (`--dry` only prints settings and proves nothing here.) | Output |
 | 7 | Note anything that was slow, unclear, or required knowledge only one person has. | Findings |
+
+### Running the automated steps
+
+`deploy/backup.sh` takes the backup, and `ops/restore-drill.sh` does steps 3 and 4 and writes the record. Both are verified end to end in `apps/api/test/backup-restore.integration.test.ts`.
+
+```bash
+# on the backup host, with the database owner connection (never the link keys)
+OWNER_DATABASE_URL=<owner connection> deploy/backup.sh --out /backups --encrypt-to <gpg recipient>
+
+# on the clean drill machine, with the keys as retrieved from the KEY BACKUP (step 2)
+LINK_ENCRYPTION_KEYS=<from backup> LINK_BLIND_INDEX_KEY=<from backup> \
+  ops/restore-drill.sh --backup /backups/campus-social-<time>.dump.gpg \
+                       --manifest /backups/campus-social-<time>.manifest.txt
+```
+
+- The backup is encrypted **to a public key**, so the backup host can write backups but cannot read them. The private key is a third secret, held by the custodians like the link keys, and **kept apart from both the backups and the link keys**.
+- The drill restores into a throwaway container, compares row counts with the manifest, runs `verify-keys`, and writes a record to `ops/drills/`. The container and the decrypted data are removed afterwards.
+- **It cannot do steps 2, 5, 6 or 7 for you.** The record lists them as open boxes. G7 stays open until a person has filled them in.
 
 **Pass criteria:**
 - `verify-keys` reports **0 problems** and the expected number of links.

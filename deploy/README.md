@@ -47,7 +47,9 @@ Check the API with `curl http://127.0.0.1:3000/health`.
 - **The moderator console is served by the admin service** at `/console`, on the same port as the admin API. Keep that port private. Reach it from a moderator's machine with an SSH tunnel (`ssh -L 3100:127.0.0.1:3100 host`) or a private network, then open `http://127.0.0.1:3100/console`.
 - **TLS and a public address are not included.** The API speaks plain HTTP on `127.0.0.1:3000`. Put a reverse proxy or the platform's load balancer in front, terminate TLS there, and forward only `/` to the API. **Never expose the admin port (3100).**
 - **Photos default to a local volume**, which means exactly **one** API instance, and that volume must be backed up with the database. Set `PHOTO_STORAGE=s3` (below) to remove that limit.
-- **Backups are not included.** Take database backups on a schedule, back up the link keys separately from the database, and run the restore drill in `../ops/KEY_CUSTODY_AND_RESTORE.md`.
+- **Backups are scripts, not a schedule.** `backup.sh` and `restore.sh` exist and are tested, but **nothing runs them**. Put `backup.sh` on a schedule on a host that does not hold the link keys, copy the output off that host, and keep the link keys separately (`../ops/KEY_CUSTODY_AND_RESTORE.md`). Then run the restore drill.
+- **A backup keeps deleted data.** A student who closes their account, or deletes a post, is still in every backup taken before that. Decide how long backups are kept (a short, fixed period such as 35 days works), delete older ones, and say so in the privacy policy. The policy's "deleted within 30 days" is only true of the live service unless backups age out too.
+- **The photo bucket is not covered by `backup.sh`'s database dump.** Either archive it with `--photos` (local storage only) or rely on the storage provider's replication, and apply the same retention rule.
 - **Secrets belong in the platform's secret store**, not in files on a disk. The env files are the interface, not the recommendation.
 - **The production API will not start without `SMTP_URL` and `MAIL_FROM`**, because codes must never be printed to a log.
 - **There is no automatic restart or schedule.** `restart` is `"no"` by design; set it per your platform if you want it.
@@ -75,3 +77,18 @@ Leave `S3_ENDPOINT` and `S3_FORCE_PATH_STYLE` out for AWS S3. Rules for the buck
 - **Least privilege.** The API needs put, get and delete on the bucket (or prefix). The admin service only needs get. Give each its own credentials.
 - **Region.** It is part of the hosting and transfer decision in `../DECISION_BRIEF.md`.
 - **Moving existing photos.** Switching from `local` to `s3` does not copy files. Copy the photo directory into the bucket first (keys are the file names), or start fresh in a test setup.
+
+## Backup and restore
+
+```bash
+OWNER_DATABASE_URL=postgres://postgres:...@host:5432/campus_social \
+  ./backup.sh --out /backups --encrypt-to ops@example.org [--photos /data/photos]
+
+./restore.sh --backup /backups/campus-social-<time>.dump.gpg \
+             --target-url postgres://postgres:...@scratch-host:5432/campus_social --yes-overwrite
+```
+
+- Backups are encrypted to a **public key**: the machine that takes them cannot read them. Keep the private key with the custodians, apart from the backups and from the link keys.
+- `--unencrypted` exists for development only. It prints a warning and the manifest records `encrypted: NO`.
+- `restore.sh` refuses to run without `--yes-overwrite`, and refuses a target equal to `OWNER_DATABASE_URL`. It creates the service roles if the target is a new server, but **role passwords are not in a dump**: run `set-role-passwords.sh` after restoring.
+- If `pg_dump` is not installed, the scripts run the PostgreSQL tools from a container (`PG_TOOLS=docker` forces that). The tools must match the server's major version.

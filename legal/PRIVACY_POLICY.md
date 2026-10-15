@@ -110,6 +110,7 @@ We respond within [30 days, confirm with lawyer]. You may also complain to the O
 
 ## 9. Account closure, re-verification and what remains
 
+- **Backups.** We keep encrypted backups of the service so we can recover from a failure. A backup can still hold content you deleted, or an account you closed, until it is replaced. Backups are kept for [backup retention period] and then deleted, and the data in them is not used for anything else.
 - **Reminders.** Before the deadline, and again before a read-only account would close, we email your university address to remind you. These emails are plain text, contain no tracking and no links, and are the only emails we send apart from one-time codes. We keep a short record of which reminder was sent so we do not send it twice, and delete it after about 13 months.
 - **Re-verification.** Once a year you confirm your university email with a one-time code. If you do not, your account becomes **read-only** (you can still sign in, download your data and re-verify). After a further [30 days] it closes.
 - **Graduating.** If you lose your university email, you cannot re-verify, so you have the same grace period to download your data. Then your account closes.
