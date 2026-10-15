@@ -1,7 +1,8 @@
-import { Platform, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import Svg, { Circle } from "react-native-svg";
 import type { ProfileKind } from "@/core/api/types";
 import { Text } from "./Text";
+import { hiddenFromReaders } from "./a11y";
 import { useTheme } from "./theme";
 
 export type AvatarSize = "sm" | "md" | "lg" | "xl";
@@ -11,11 +12,6 @@ export function initialOf(name: string | null | undefined): string {
   const t = (name ?? "").replace(/^@/, "").trim();
   return t ? t.charAt(0).toUpperCase() : "?";
 }
-
-const hiddenFromReaders =
-  Platform.OS === "web"
-    ? ({ "aria-hidden": true } as object)
-    : { accessibilityElementsHidden: true, importantForAccessibility: "no-hide-descendants" as const };
 
 export function Avatar({
   kind,

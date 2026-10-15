@@ -74,7 +74,8 @@ export class ProfileService {
 
     if (Object.keys(set).length === 0) return current;
 
-    const base = set.displayName !== undefined ? handleBase(set.displayName) : null;
+    const autoHandle = new RegExp(`^${handleBase(current.displayName ?? "")}_\\d{4}$`).test(current.handle);
+    const base = set.displayName !== undefined && autoHandle ? handleBase(set.displayName) : null;
     const now = this.now();
 
     for (let attempt = 0; attempt < HANDLE_RETRIES; attempt += 1) {

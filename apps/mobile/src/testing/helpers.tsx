@@ -49,7 +49,7 @@ export async function renderApp(
     token?: string | null;
     scheme?: "light" | "dark";
     identity?: boolean;
-    authFlow?: { email?: string; code?: string };
+    authFlow?: { email?: string; code?: string; dateOfBirth?: string };
   } = {},
 ) {
   return render(

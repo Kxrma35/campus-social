@@ -1,5 +1,5 @@
 import { ActivityIndicator, Pressable, StyleSheet } from "react-native";
-import { MIN_TARGET, radius, spacing } from "@/theme/tokens";
+import { MIN_TARGET, radius, shadow, spacing } from "@/theme/tokens";
 import { Text } from "./Text";
 import { useTheme } from "./theme";
 
@@ -35,7 +35,7 @@ export function Button({
       : variant === "danger"
         ? t.onDanger
         : variant === "link"
-          ? t.primary
+          ? t.accentText
           : t.text;
   const border = variant === "secondary" ? t.border : "transparent";
 
@@ -51,12 +51,16 @@ export function Button({
       style={({ pressed }) => [
         styles.base,
         { backgroundColor: bg, borderColor: border, opacity: inactive ? 0.5 : pressed ? 0.85 : 1 },
+        variant === "primary" ? shadow.button : null,
       ]}
     >
       {busy ? (
         <ActivityIndicator color={fg} />
       ) : (
-        <Text variant="label" style={{ color: fg, textAlign: "center" }}>
+        <Text
+          variant="label"
+          style={{ color: fg, textAlign: "center", textDecorationLine: variant === "link" ? "underline" : "none" }}
+        >
           {label}
         </Text>
       )}

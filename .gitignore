@@ -15,3 +15,8 @@ data/
 legal/site-dist/
 .bundle-check/
 .web-check/
+
+# Impeccable (per-developer config and review captures)
+.impeccable/config.local.json
+.claude/settings.local.json
+apps/mobile/.impeccable/review/

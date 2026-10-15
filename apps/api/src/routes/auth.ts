@@ -14,6 +14,7 @@ const signupVerify = z.object({
   confirmAge18: z.literal(true),
   acceptTerms: z.literal(true),
   displayName: z.string().trim().min(1).max(80),
+  handle: z.string().trim().max(40).nullish(),
   course: z.string().trim().max(120).nullish(),
   studyYear: z.number().int().min(1).max(8).nullish(),
   deviceLabel: z.string().trim().max(80).nullish(),

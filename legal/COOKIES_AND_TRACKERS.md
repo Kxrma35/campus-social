@@ -48,7 +48,7 @@ Checked on 2026-10-12 against the app's configuration and dependency list. This 
 | Asset | Source | Licence | Date recorded |
 |---|---|---|---|
 | App icon, splash screen, favicon (`apps/mobile/assets`) | Original placeholder drawn for this project from plain shapes (`apps/mobile/assets/source/*.svg`); no third-party artwork | The project's own; to be replaced with real branding before launch | 2026-10-12 |
-| Fonts, app | None bundled: the app uses the system fonts (Literata was tried on 2026-10-15 and removed the same day) | n/a | 2026-10-15 |
+| Fonts, app | Figtree, bundled at build time from `@expo-google-fonts/figtree`; full record in `docs/licences.md` | SIL Open Font License 1.1 | 2026-10-15 |
 | Fonts, policy pages and moderator console | None bundled: they use the system fonts | n/a | 2026-10-12 |
 
 ## Changes

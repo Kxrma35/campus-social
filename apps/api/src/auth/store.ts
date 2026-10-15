@@ -117,6 +117,7 @@ export interface AuthStore {
     blindIndex: Buffer;
     now: Date;
   }): Promise<CreateAnonymousResult>;
+  isHandleTaken(universityId: string, handle: string): Promise<boolean>;
   getProfileBasics(profileId: string): Promise<{ handle: string; avatarKey: string | null } | null>;
 
   /** One appeal per account, ever. */

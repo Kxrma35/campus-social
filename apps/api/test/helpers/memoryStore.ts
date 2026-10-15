@@ -281,6 +281,10 @@ export class MemoryAuthStore implements AuthStore {
     return "created" as const;
   }
 
+  async isHandleTaken(_universityId: string, handle: string) {
+    return [...this.profiles.values()].some((p) => p.handle === handle);
+  }
+
   async getProfileBasics(profileId: string) {
     const p = this.profiles.get(profileId);
     return p ? { handle: p.handle, avatarKey: this.avatars.get(profileId) ?? null } : null;

@@ -7,7 +7,8 @@ import { Button } from "@/ui/Button";
 import { Notice } from "@/ui/Notice";
 import { Screen } from "@/ui/Screen";
 import { Text } from "@/ui/Text";
-import { TextField } from "@/ui/TextField";
+import { InlineError } from "@/ui/InlineError";
+import { OtpInput } from "@/ui/OtpInput";
 
 export default function Reverify() {
   const { api, setAccountStatus } = useSession();
@@ -70,11 +71,11 @@ export default function Reverify() {
         <Button label="Send me a code" onPress={request} busy={busy} testID="request-reverify" />
       ) : (
         <>
-          <TextField label="6-digit code" value={code} onChangeText={setCode} keyboardType="number-pad" maxLength={7} testID="reverify-code" />
+          <OtpInput value={code} onChange={setCode} error={Boolean(error)} testID="reverify-code" />
           <Button label="Confirm" onPress={confirm} busy={busy} testID="confirm-reverify" />
         </>
       )}
-      {error ? <Notice tone="error">{error}</Notice> : null}
+      {error ? <InlineError>{error}</InlineError> : null}
       <Notice title="Graduated, or lost access to your university email?">
         You will not be able to confirm. Download your data before your account closes, from
         Settings.

@@ -1,283 +1,115 @@
----
-name: Moku
-description: A campus feed set like a small publication with a face, in quiet blue, lilac and neutrals.
-colors:
-  background: "#FFFFFF"
-  surface: "#F3F4F6"
-  text: "#111827"
-  text-muted: "#4B5563"
-  border: "#6B7280"
-  primary: "#1D4ED8"
-  on-primary: "#FFFFFF"
-  danger: "#B91C1C"
-  success: "#166534"
-  anonymous: "#6D28D9"
-  on-anonymous: "#FFFFFF"
-  hairline: "#6B728040"
-  primary-soft: "#1D4ED81A"
-  anonymous-soft: "#6D28D91A"
-  dark-background: "#0B0F19"
-  dark-surface: "#161C2D"
-  dark-text: "#F3F4F6"
-  dark-text-muted: "#A8B0C0"
-  dark-border: "#8892A6"
-  dark-primary: "#93C5FD"
-  dark-on-primary: "#0B0F19"
-  dark-danger: "#FCA5A5"
-  dark-success: "#86EFAC"
-  dark-anonymous: "#C4B5FD"
-  dark-hairline: "#8892A640"
-  dark-primary-soft: "#93C5FD26"
-  dark-anonymous-soft: "#C4B5FD26"
-typography:
-  display:
-    fontFamily: "Literata_600SemiBold, serif"
-    fontSize: "32px"
-    fontWeight: 600
-    lineHeight: "38px"
-  reading:
-    fontFamily: "Literata_400Regular, serif"
-    fontSize: "17px"
-    fontWeight: 400
-    lineHeight: "27px"
-  reading-large:
-    fontFamily: "Literata_400Regular, serif"
-    fontSize: "19px"
-    fontWeight: 400
-    lineHeight: "30px"
-  title:
-    fontFamily: "system-ui, sans-serif"
-    fontSize: "24px"
-    fontWeight: 700
-    lineHeight: "30px"
-  heading:
-    fontFamily: "system-ui, sans-serif"
-    fontSize: "18px"
-    fontWeight: 600
-    lineHeight: "24px"
-  body:
-    fontFamily: "system-ui, sans-serif"
-    fontSize: "16px"
-    fontWeight: 400
-    lineHeight: "22px"
-  label:
-    fontFamily: "system-ui, sans-serif"
-    fontSize: "14px"
-    fontWeight: 600
-    lineHeight: "20px"
-  small:
-    fontFamily: "system-ui, sans-serif"
-    fontSize: "13px"
-    fontWeight: 400
-    lineHeight: "18px"
-rounded:
-  sm: "6px"
-  md: "10px"
-  lg: "16px"
-  pill: "999px"
-spacing:
-  xs: "4px"
-  sm: "8px"
-  md: "12px"
-  lg: "16px"
-  xl: "24px"
-  xxl: "32px"
-components:
-  button-primary:
-    backgroundColor: "{colors.primary}"
-    textColor: "{colors.on-primary}"
-    typography: "{typography.label}"
-    rounded: "{rounded.md}"
-    padding: "8px 16px"
-    height: "44px"
-  button-secondary:
-    backgroundColor: "transparent"
-    textColor: "{colors.text}"
-    rounded: "{rounded.md}"
-    padding: "8px 16px"
-    height: "44px"
-  button-danger:
-    backgroundColor: "{colors.danger}"
-    textColor: "{colors.on-primary}"
-    rounded: "{rounded.md}"
-    padding: "8px 16px"
-    height: "44px"
-  chip-anonymous:
-    backgroundColor: "{colors.anonymous}"
-    textColor: "{colors.on-anonymous}"
-    typography: "{typography.small}"
-    rounded: "{rounded.pill}"
-    padding: "2px 8px"
-  chip-known:
-    backgroundColor: "{colors.primary}"
-    textColor: "{colors.on-primary}"
-    typography: "{typography.small}"
-    rounded: "{rounded.pill}"
-    padding: "2px 8px"
-  notice:
-    backgroundColor: "{colors.surface}"
-    textColor: "{colors.text}"
-    rounded: "{rounded.md}"
-    padding: "12px"
-  field:
-    backgroundColor: "{colors.background}"
-    textColor: "{colors.text}"
-    typography: "{typography.body}"
-    rounded: "{rounded.md}"
-    padding: "8px 12px"
-    height: "44px"
-  field-writing:
-    backgroundColor: "{colors.background}"
-    textColor: "{colors.text}"
-    typography: "{typography.reading-large}"
-    padding: "12px 0"
-    height: "180px"
----
+# Design: visual system and auth flow (M1)
 
-# Design System: Moku
+Status: BUILT (2026-10-15) after owner approval. Decisions below were answered: the app is named Moku; this direction replaces the Dribbble one; the real API serves the flow and only the pending-approval screen is unreachable until open decision 3; dependencies `expo-image`, `expo-blur` and Figtree were added; the handle is now chosen at sign-up on the server. The profile photo was not built (see the end of this file). This replaces the system documented in commit 62a9375 (monochrome ink, Literata removed, floating tab bar); recover it with `git show 62a9375:apps/mobile/DESIGN.md`.
 
-## Overview
+## Decisions I need from you before building
 
-**Creative North Star: "The Campus Notebook Page"**
+1. **App name.** The app was renamed to Moku in commit 62a9375 an hour before this brief, which says `APP_NAME` = "Campus Social". I will put the name in one `APP_NAME` constant. Which value should it hold: "Moku" (what is committed) or "Campus Social"?
+2. **Visual direction.** PRODUCT.md currently records the Dribbble shot "Social Media App Design" (near-black ink, grey ground, pill tabs) as a binding brand commitment. This brief sets the sign-in reference as the direction instead. I read the new brief as superseding the old one for the whole app and will update PRODUCT.md's Brand Commitments on approval. Confirm.
+3. **Mock API.** A real API for this flow already exists (sign-up, sign-in, codes, re-verification, 18+ check, rate limits) and the app is wired to it. "Never ship fake success" plus a mock behind a dev flag is only needed for the two screens the API cannot serve yet (below). Confirm that is acceptable, instead of mocking the whole auth module.
+4. **Dependencies (ask-first rule).** Proposed additions: `expo-image` (placeholder and later real photos), `expo-blur` (glass caption card, with a solid fallback), and one bundled OFL font (below) via its `@expo-google-fonts` package. `expo-font` and `react-native-svg` are already installed. Nothing else, and no analytics or crash SDKs.
+5. **Handle and photo at sign-up.** The API's sign-up accepts display name, course and year, and generates the handle on the server. Letting the student pick a handle or add a photo needs a backend change (endpoint fields, validation, photo upload before the account exists). Do you want that backend work in this pass, or should the setup screen show the generated handle read-only and leave the photo for the edit-profile screen?
+6. **Pending approval (open decision 3).** The API has no "cannot classify this email" state, so the screen cannot be driven by real data. I will build the screen and its component, route to it only when the API says so, and leave it unreachable until decision 3 is made. It will not pretend to submit anything.
 
-A feed that reads like a small publication with a face. Every post opens with a person and is set as a short published note in a serif reading face, over a quiet hairline list. Controls and labels stay in the system sans so that writing is the only thing that looks written. Concept: Instagram's person-led posts mashed with Substack's reading and writing calm.
+## What I take from the reference, and what I do not
 
-Density is moderate and card-led, after the Dribbble shot "Social Media App Design" by Sujon Hossain (structure and shape only, no content): a cool grey ground carries white rounded cards, selection is a filled pill, and the tab bar floats as a pill. A single blue carries action while lilac is reserved for anonymous identity. Identity is always visible as text (chip) and as a disc (avatar). The system is the incumbent blue, lilac and neutral palette, unchanged.
+Taken (language, not assets):
+- A calm plain form beside a large rounded photo panel; on a phone the panel stacks above the form.
+- The panel's concave top-left notch carrying a circular back button.
+- A translucent dark glass caption card at the bottom of the panel with white text and a pair of small circular arrow buttons.
+- A small centred logomark, short title, one-line subtitle, small labels above fields, hairline-bordered soft-radius inputs, a full-width near-black primary button with a soft shadow, underlined links, and the "Don't have an account? Sign up" line anchored near the bottom.
+- Near-monochrome with a soft lavender-and-pink accent used sparingly.
 
-**Key Characteristics:**
-- Serif (Literata) for post text, writing surfaces, the writing prompt, screen titles and display names; system sans for every control and label.
-- Cards (radius 22 for posts, 16 for rows) on a grey ground, pill selection, a floating pill tab bar, hairline borders, no shadows.
-- Round avatar discs: lilac with two overlapping circles for anonymous, blue-tinted with an initial for known.
-- Line icons at one stroke weight (1.75).
-- Light and dark schemes with a shared role vocabulary.
+Not taken: the photograph, the logomark (mine is an original pair of overlapping translucent circles, drawn in SVG, placeholder), the testimonial and its person, the "gigs" wording, the password field, the window chrome dots.
 
-## Colors
+Fixed for accessibility: the reference's pale grey helper text (about 2.5:1) becomes `inkMuted` at 6.8:1; its small arrow buttons become 44pt targets.
 
-A restrained blue-and-neutral palette with one lilac for anonymous identity. Values below are the light scheme; dark values are in the frontmatter under the dark- prefix.
+## Layouts
 
-### Primary
-- **Campus Blue** (#1D4ED8; dark #93C5FD): actions, selected tab and underline, filled heart, links, focus ring, known chip fill.
+**Phone (width under 600pt).** Scroll-free where possible, scrolling when the keyboard or font scale demands it.
+- Photo panel on top, about half the screen height, inset 12pt from the edges, 28pt corner radius, concave notch top-left holding a 44pt circular back button (hidden on the first screen of the flow).
+- Caption card inside the panel's bottom edge: dark glass, 16pt inset, a statement line, a supporting line, a "n of N" indicator, previous and next circular buttons (44pt targets).
+- Below the panel: logomark, title, subtitle, fields, primary button, link row. "Don't have an account? Sign up" sits at the bottom edge of the safe area.
+- When the keyboard opens, the panel collapses to a short band (about 25% of height) so the primary button stays reachable. With system font scale above 150% the panel is dropped to a 96pt decorative strip and the form scrolls.
 
-### Secondary
-- **Anonymous Lilac** (#6D28D9; dark #C4B5FD): the anonymous profile only: its chip fill and its avatar mark. Never decoration.
+**Tablet and wide (600pt and up).** The reference's split: form column left (max 420pt, vertically centred, logomark top), photo panel right (fills the remaining width, same radius and notch, caption card bottom). On portrait tablets the split is 45/55.
 
-### Neutral
-- **Page White** (#FFFFFF; dark #0B0F19): screen and field background.
-- **Quiet Surface** (#F3F4F6; dark #161C2D): Notice background.
-- **Ink** (#111827; dark #F3F4F6): primary text.
-- **Muted Ink** (#4B5563; dark #A8B0C0): handles, times, counts, inactive tabs and icons.
-- **Border Grey** (#6B7280; dark #8892A6): field and notice borders; hairline is the same hue at 25 percent alpha.
-- **Danger Red** (#B91C1C) and **Success Green** (#166534): errors and confirmations in Notice borders, field errors and the danger button.
+## Screen list
 
-### Named Rules
-**The One Blue Rule.** Blue means "you can act on this" or "this is selected". It is never used as decoration.
-**The Lilac Means Anonymous Rule.** Lilac appears only where an anonymous profile is speaking.
-**The Words Carry Identity Rule.** Identity is always also stated as a text chip (You, Student, Anonymous); colour is never the only signal.
+| # | Screen | Status |
+|---|---|---|
+| 1 | Sign in: university email, "Send code", inline error for non-USIU emails | Exists (email.tsx); restyle, add USIU-domain inline check mirrored from the server rule |
+| 2 | Code entry: 6 digits, OS one-time-code autofill, 10-minute expiry countdown, resend with cooldown, change email | Exists (code.tsx); new OtpInput, expiry and cooldown |
+| 3 | Sign-up details: date of birth with 18+ confirmation | Exists in details.tsx; split into its own step |
+| 4 | Under-18 stop screen: respectful, creates nothing, clears entered data | New. The current screen shows an inline error and keeps the form state |
+| 5 | Agreements: three separate unticked checkboxes (Terms, Privacy, Community Rules), each linking to a screen marked DRAFT | Changes. Today one bundled checkbox covers all three, which breaks the no-bundled-consent rule |
+| 6 | Known profile setup: display name, course and year optional, handle and photo per decision 5 | Partly exists |
+| 7 | Done | New, short |
+| 8 | Pending approval | New, see decision 6 |
+| 9 | Annual re-verification | Exists (settings/reverify.tsx); reuses OtpInput |
+| 10 | DRAFT placeholder screens for the three agreements | Exist as legal links; restyled and clearly marked DRAFT, no legal text written |
+
+Every screen covers: loading, wrong code, expired code, too many attempts, rate-limited, offline, server error. Errors render in an `InlineError` that is announced to screen readers (`accessibilityLiveRegion="polite"`, role alert).
+
+## Token set (one theme module, light and dark)
+
+No pure #000, #fff or flat grey anywhere. Ratios computed with WCAG relative luminance.
+
+| Token | Light | Dark | Notes |
+|---|---|---|---|
+| `bg` | #F6F4F7 | #14121A | tinted off-white / near-black |
+| `surface` | #FCFBFD | #1D1A25 | inputs, cards |
+| `ink` | #1B1822 | #EEEAF4 | 16.0:1 / 15.7:1 on bg |
+| `inkMuted` | #58535F | #B2ACBD | helper text; 6.8:1 / 8.4:1 on bg |
+| `border` | #8A8493 | #7C7689 | hairline, 3.3:1 / 4.3:1 on bg (component border floor is 3:1) |
+| `primary` / `onPrimary` | #1B1822 / #F6F4F7 | #EEEAF4 / #14121A | the near-black button; 16.0:1 / 15.7:1 |
+| `accentLavender` | #B8A6E8 | #8E7BD1 | decorative only, never text |
+| `accentPink` | #E9A9D2 | #C77FB0 | decorative only, never text |
+| `accentText` | #5B3FB5 | #C3B1FF | accent used as text or icon; 6.8:1 / 9.8:1 |
+| `identity.known` | #3B3F9E (indigo) | #A9AEFF | 8.0:1 / 9.0:1 on bg |
+| `identity.anon` | #9A2A6B (plum) | #F0A3CF | 6.6:1 / 9.6:1 on bg |
+| `danger` | #A3262F | #FF9AA2 | 6.7:1 / 9.2:1 |
+| `glass` | ink at 78% over the photo | same | caption card; white text 8.5:1 worst case over a white photo (70% would give 6.3:1, 60% fails at 4.4:1) |
+
+Identity colours differ in hue, but colour is never the only signal: `IdentityBadge` always carries a text label ("Your profile" or "Anonymous profile") and an icon with different shapes (a single filled disc for known, two overlapping outline circles for anonymous).
+
+Other values in the module: spacing 4/8/12/16/24/32/48, radius 10 (inputs), 14 (cards), 28 (photo panel), 999 (circles and pills), touch target 44, panel notch radius 20, shadow `button` (one soft, low-opacity drop) used only on the primary button.
 
 ## Typography
 
-**Display Font:** Literata SemiBold (with serif fallback)
-**Body Font:** Literata Regular for reading; platform system sans for UI
-**Label/Mono Font:** system sans
+Quiet and small: title 22/28 semibold, subtitle 14/20, label 13/18 medium, body 16/24, input 16/24, helper 13/18, link 14/20 underlined, caption 12/16 (never below 12). All sizes scale with the system font setting up to 200%; layouts use min-heights, no fixed text boxes.
 
-**Character:** Literata gives posts the feel of a published note; the neutral system sans keeps buttons, labels and counts out of its way.
-
-### Hierarchy
-- **Display** (600, 32/38): welcome title, own and other profile names.
-- **Reading Large** (400, 19/30): post body on the post detail screen and the writing field.
-- **Reading** (400, 17/27): post body in the feed (clamped at 8 lines with a "Read more" label past 400 characters), the writing prompt, intro copy.
-- **Title** (700, 24/30): screen titles in sans.
-- **Heading** (600, 18/24): section headings.
-- **Body** (400, 16/22): form text and secondary reading.
-- **Label** (600, 14/20): author names, buttons, tabs, counts, field labels.
-- **Small** (400, 13/18): handle and time, hints, chips (700).
-
-Tab bar headers use Literata SemiBold; tab labels are 13px.
-
-### Named Rules
-**The Serif Is For Words People Wrote Rule.** Literata is for what a student writes or is prompted to write, plus screen titles and names; controls never use it.
-
-## Layout
-
-A single column. Screens pad 16px on the sides with 16px gaps; posts are full width up to 640px and centred on wider screens (tablet capture). Spacing scale 4, 8, 12, 16, 24, 32. Post anatomy top to bottom: person header (md avatar, name, handle and time, chip at the right), photos full width with no side padding, serif body, icon action row. Feed top to bottom: writing prompt row (56px), rail of followed people (lg avatars, 68px cells), three text tabs, then the posts. Every interactive target is at least 44px.
-
-## Elevation & Depth
-
-Flat. There are no shadows in the build. Depth is conveyed by white cards on the grey ground (ground #F3F4F6 and card #FFFFFF in light; ground #0B0F19 and card #161C2D in dark), a hairline border on each card and on the floating tab bar, a tinted pressed state on rows (primary-soft) and 0.6 to 0.85 opacity on press. The only motion is a spring scale on the heart (from 0.8, skipped when reduce motion is on).
-
-### Named Rules
-**The Card On Ground Rule.** Content sits on a white card over the grey ground, with a hairline border and no shadow; selection is a filled primary pill, never a box outline.
-
-## Shapes
-
-Round avatar discs and pill chips for identity; 10px corners (md) on buttons, fields and notices; 6px on action hit areas. Photos are square-cornered, full width, with aspect ratio clamped 0.8 to 1.6 (default 1.25) and a primary-soft placeholder. Multi photo posts page horizontally with 6px dots and an "n of N" count.
+Font: **Figtree** (SIL OFL 1.1), weights 400, 500 and 600, bundled at build time through `@expo-google-fonts/figtree` and `expo-font`, never fetched at run time. Licence and source go into `docs/licences.md`. Alternative if you prefer something with more character: Instrument Sans (also OFL).
 
 ## Components
 
-### Buttons
-- **Shape:** 10px corners, 44px minimum height, 1px border.
-- **Primary:** Campus Blue fill, white (dark: near-black) label in Label weight, 16px by 8px padding.
-- **Secondary:** transparent with Border Grey outline and Ink label.
-- **Danger / Link:** danger fill; link is text only in primary.
-- **State:** 0.85 opacity pressed, 0.5 disabled or busy (spinner replaces label).
+`Screen`, `Button` (primary, secondary, link), `TextField`, `OtpInput`, `Checkbox`, `IconButton` (circular, 44pt), `HeroPanel` (photo, notch, caption card, pager), `InlineError` and `Banner`, `IdentityBadge`, plus `Logomark` and an `APP_NAME` constant. Existing components with the same names are reworked in place, not duplicated.
 
-### Text tabs (SegmentedControl)
-A pill-shaped control on a card: the selected segment is a filled primary pill with on-primary text, 700 weight; others are muted, 500 weight. Focus draws a 2px focus-coloured outline.
+`HeroPanel` details: slides are typed (`{ id, kind: "statement" | "quote", text, support?, attribution?, photo, alt }`). Day one ships real product statements only, for example "Only verified USIU-Africa students can see posts." and "You can post under your own name, or anonymously. Anonymous means hidden from other students, not from trust and safety staff." The `quote` kind is a typed slot for beta-tester quotes, empty until you provide real, consented text. The pager never auto-advances, previous and next are labelled buttons, and the "n of N" text is announced.
 
-### Post
-Person-led, a rounded white card with the photo carousel inset and rounded. The action row holds heart plus count, comment plus count, and a More dots icon pushed right; liked heart is filled in primary. More reveals a hairline-topped panel with the report explanation and a secondary Report button.
+Photos: until real ones exist, the panel shows an original generated greyscale texture drawn locally, with a visible "Placeholder image" label in the corner, marked decorative for screen readers. No stock photo is bundled.
 
-### Avatar
-Discs at 28, 40, 56 and 80px. Known shows the initial in blue at 42 percent of the diameter, bold; anonymous shows the two overlapping circles at 1.8 stroke. Hidden from screen readers because text carries identity.
+## Accessibility checks that become tests
 
-### Profile chip
-Filled pill: Student and You in blue, Anonymous in lilac; 13px bold.
+- A unit test enumerates every text-on-background token pair in both themes and asserts the ratio (4.5 for text, 3 for large text, borders and icons).
+- RNTL tests for each auth screen use accessible queries (role and label), covering error announcement, disabled states, focus order, and that the three agreement boxes start unticked and are independent.
+- Reduce Motion is respected (no panel transition when it is on).
+- No analytics, tracking, contacts, phone numbers, location or ID photos are collected; the only fields are those in the flow list.
 
-### Comment
-Sm avatar, label name with chip, muted time, then heart count and a link button (Delete if mine, Report otherwise); hairline below.
+## Files this will touch
 
-### List row
-Minimum 56px, optional icon at muted, title in body, detail in small muted, chevron; hairline below; primary-soft when pressed.
+Theme module and components under `src/theme` and `src/ui`; auth screens under `src/app/(auth)`; the re-verification screen; `src/core/config` for `APP_NAME`; `docs/licences.md` (new, consolidating the font, placeholder art and icon records that currently live in `legal/COOKIES_AND_TRACKERS.md`); `.gitignore` (the Impeccable block, only if missing when I get there); `PRODUCT.md` Brand Commitments (on approval of decision 2). The reference image stays at the repo root as `signin-reference.png`; I would move it to `docs/design/reference/` only if you want that.
 
-### Fields
-Standard: 1px Border Grey outline, 10px corners, body type, 44px minimum, error border in danger. Writing variant: borderless apart from a hairline top, Reading Large serif, 180px minimum, hint right-aligned beneath.
+## Blocked by open decisions in BUILD_PLAN.md
 
-### Notice
-Quiet Surface fill, 1px border (grey, danger or success), 10px corners, 12px padding, optional Label title.
+- Decision 2 (legal entity details): the DRAFT agreement screens carry no business details.
+- Decision 3 (staff vs student emails): the pending-approval screen cannot be driven by real data.
+- Decision 8 (app name and brand): `APP_NAME` and the placeholder logomark are constants to swap.
 
-### Writing prompt (signature)
-Top-of-feed row: acting avatar, "What is on your mind?" in Reading muted, image icon; a hairline below.
+## Built, and what was left out
 
-## Do's and Don'ts
-
-### Do:
-- **Do** open every post with a person: avatar, name, handle, time, identity chip.
-- **Do** set anything a student writes in Literata and every control in the system sans.
-- **Do** separate with hairlines and keep surfaces flat.
-- **Do** keep 44px targets and state identity as words.
-- **Do** keep icons to the one line style at 1.75 stroke.
-
-### Don't:
-- **Don't** wrap posts in outlined cards or lines of identical outlined buttons.
-- **Don't** use lilac for anything but anonymous identity.
-- **Don't** add shadows, gradients or decorative colour.
-- **Don't** use an icon alone to carry a state without an accessible label.
-
-## Open items (not yet shipped or verified)
-- Posting-as two-disc switch in the composer (the signature identity mark is not yet used as a switch).
-- Haptics on like.
-- Empty-state marks.
-- Light theme profile and settings screens not captured.
-- Photos not verified with real images on web.
-
-## Build notes
-- The direction contract described text above the photo; the build places photos above the body text. The build wins and is recorded above.
-- PRODUCT.md notes no brand colour or logo and an unconfirmed name; this palette is the incumbent, not a brand.
-
-## Update 2026-10-15: monochrome, after the Dribbble shot
-
-The app was moved to match "Social Media App Design" by Sujon Hossain as closely as the product allows. This section supersedes the palette, type and component notes above where they differ; `src/theme/tokens.ts` is authoritative.
-
-- Palette: near-black ink (#0B0B12, white in dark) replaces blue for selection, action and the known-profile chip. Lilac (#6D28D9, #C4B5FD in dark) stays only for anonymous identity. Ground #F2F3F5, card #FFFFFF in light; ground #0B0B0F, card #17171C in dark.
-- Type: system sans only, 700 for titles and names. Literata was removed.
-- Shapes: rounded-square avatars (32% radius), separate pill tabs (selected is filled ink), dashed "+ Write a post" row, rounded cards, a circle back button, and an icon-only floating pill tab bar with a filled ink circle for the active tab and an outlined "+" that opens the composer.
+- Built: theme module with light and dark palettes and an AA contrast test; Figtree bundled; `Logomark`, `IconButton`, `InlineError`, `IdentityBadge`, `OtpInput`, `HeroPanel` (notch, glass caption card with solid fallback, labelled pager that never auto-advances), `AuthShell` (phone stack, tablet split, keyboard and large-text collapse); screens welcome, email, code, birthdate, underage, agreements, DRAFT documents, profile, done, pending approval; re-verification reuses `OtpInput`.
+- Backend: sign-up accepts an optional chosen handle (3 to 20 characters, reserved words and anonymous-style handles refused, uniqueness checked before the code is used). A chosen handle is kept when the display name later changes.
+- Not built: **profile photo at sign-up.** A photo other students can see needs moderator tooling to review and remove it, a data protection impact assessment update, and serving rules, which belong with milestone M3. Until then the profile shows initials.
+- Not reachable yet: pending approval (open decision 3).
+- Not changed: package ids, URL scheme and database name still use the old working name.

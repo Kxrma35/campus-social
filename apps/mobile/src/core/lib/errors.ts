@@ -7,6 +7,8 @@ const BY_CODE: Record<string, string> = {
   code_expired: "That code has expired. Request a new one.",
   too_many_attempts: "Too many wrong codes. Request a new code to try again.",
   too_many_requests: "Too many codes requested. Please wait a while and try again.",
+  handle_taken: "That handle is already taken. Choose another.",
+  invalid_handle: "Use 3 to 20 letters, numbers or underscores, starting with a letter, and not a reserved word.",
   must_be_18: "You must be 18 or older to use Moku.",
   invalid_date_of_birth: "Check your date of birth and try again.",
   account_exists: "An account already exists for that email. Sign in instead.",

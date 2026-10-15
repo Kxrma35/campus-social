@@ -54,7 +54,8 @@
           "microphonePermission": false
         }
       ],
-      "expo-font"
+      "expo-font",
+      "expo-image"
     ],
     "extra": {
       "apiBaseUrl": "http://10.0.2.2:3000"

@@ -74,3 +74,30 @@ export const MAX_COMMENT_LENGTH = 2000;
 export const MAX_PHOTOS = 4;
 /** Courtesy limit; the server is the authority. */
 export const MAX_ALT_TEXT = 500;
+
+export function checkUniversityEmail(raw: string, domains: readonly string[]): Checked<string> {
+  const base = checkEmail(raw);
+  if (!base.ok || !base.value) return base;
+  const domain = base.value.split("@")[1] ?? "";
+  if (!domains.includes(domain)) {
+    return fail(`Use your university email ending in @${domains[0]}.`);
+  }
+  return base;
+}
+
+const RESERVED = ["admin", "administrator", "moderator", "mod", "staff", "support", "help", "official", "system", "root", "moku", "campus", "usiu", "security", "safety", "trust", "team", "anonymous", "student"];
+
+/** Mirrors the server rules so mistakes show before sending. An empty handle is allowed. */
+export function checkHandle(raw: string): Checked<string | null> {
+  const value = raw.trim().toLowerCase().replace(/^@/, "");
+  if (value.length === 0) return pass(null);
+  if (!/^[a-z][a-z0-9_]{2,19}$/.test(value)) {
+    return fail("Use 3 to 20 letters, numbers or underscores, starting with a letter.");
+  }
+  if (value.includes("__") || value.endsWith("_")) {
+    return fail("Do not use two underscores in a row or end with one.");
+  }
+  if (RESERVED.includes(value)) return fail("That handle is reserved. Choose another.");
+  if (/^[a-z]+_[a-z]+_\d{4}$/.test(value)) return fail("That handle looks like an anonymous one. Choose another.");
+  return pass(value);
+}

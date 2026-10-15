@@ -77,6 +77,62 @@ describe("sign-up", () => {
     expect(ctx.knownProfileId).toBe(result.profile.id);
   });
 
+  it("uses a chosen handle, lowercased", async () => {
+    await c.auth.requestSignup(EMAIL);
+    await c.auth.verifySignup({
+      email: EMAIL,
+      code: c.mailer.lastCode(EMAIL),
+      ...SIGNUP,
+      handle: "@Jane_D",
+    });
+    expect([...c.store.profiles.values()][0]!.handle).toBe("jane_d");
+  });
+
+  it("rejects a bad or reserved handle without using the code", async () => {
+    await c.auth.requestSignup(EMAIL);
+    const code = c.mailer.lastCode(EMAIL);
+    await expectAuthError(
+      c.auth.verifySignup({ email: EMAIL, code, ...SIGNUP, handle: "ab" }),
+      "invalid_handle",
+    );
+    await expectAuthError(
+      c.auth.verifySignup({ email: EMAIL, code, ...SIGNUP, handle: "moderator" }),
+      "invalid_handle",
+    );
+    await expectAuthError(
+      c.auth.verifySignup({ email: EMAIL, code, ...SIGNUP, handle: "golden_cheetah_1261" }),
+      "invalid_handle",
+    );
+    const ok = await c.auth.verifySignup({ email: EMAIL, code, ...SIGNUP, handle: "jane_d" });
+    expect(ok.account.status).toBe("active");
+  });
+
+  it("says a chosen handle is taken before the code is used", async () => {
+    await c.auth.requestSignup(EMAIL);
+    await c.auth.verifySignup({
+      email: EMAIL,
+      code: c.mailer.lastCode(EMAIL),
+      ...SIGNUP,
+      handle: "jane_d",
+    });
+
+    const other = "sam@test.ac.ke";
+    await c.auth.requestSignup(other);
+    const code = c.mailer.lastCode(other);
+    await expectAuthError(
+      c.auth.verifySignup({ email: other, code, ...SIGNUP, displayName: "Sam", handle: "jane_d" }),
+      "handle_taken",
+    );
+    const ok = await c.auth.verifySignup({
+      email: other,
+      code,
+      ...SIGNUP,
+      displayName: "Sam",
+      handle: "sam_k",
+    });
+    expect(ok.account.status).toBe("active");
+  });
+
   it("normalises the email case", async () => {
     await c.auth.requestSignup("  JANE@Test.AC.KE ");
     expect(c.mailer.codes[0]?.to).toBe(EMAIL);

@@ -55,6 +55,36 @@ export function reverifyDueAt(from: Date): Date {
   return d;
 }
 
+const RESERVED_HANDLES = new Set([
+  "admin", "administrator", "moderator", "mod", "staff", "support", "help", "official", "system",
+  "root", "moku", "campus", "usiu", "security", "safety", "trust", "team", "anonymous", "student",
+]);
+
+const ANONYMOUS_HANDLE_SHAPE = /^[a-z]+_[a-z]+_\d{4}$/;
+
+export type HandleCheck = { ok: true; handle: string } | { ok: false; reason: string };
+
+/** A handle the student chose: 3 to 20 letters, digits or underscores, starting with a letter. */
+export function checkHandle(raw: string): HandleCheck {
+  const handle = raw.trim().toLowerCase().replace(/^@/, "");
+  if (!/^[a-z][a-z0-9_]{2,19}$/.test(handle)) {
+    return {
+      ok: false,
+      reason: "Use 3 to 20 letters, numbers or underscores, starting with a letter.",
+    };
+  }
+  if (handle.includes("__") || handle.endsWith("_")) {
+    return { ok: false, reason: "Do not use two underscores in a row or end with one." };
+  }
+  if (RESERVED_HANDLES.has(handle)) {
+    return { ok: false, reason: "That handle is reserved. Choose another." };
+  }
+  if (ANONYMOUS_HANDLE_SHAPE.test(handle)) {
+    return { ok: false, reason: "That handle looks like an anonymous one. Choose another." };
+  }
+  return { ok: true, handle };
+}
+
 /** Public handle for the known profile, e.g. "jane_doe_4821". */
 export function handleBase(displayName: string): string {
   const slug = displayName

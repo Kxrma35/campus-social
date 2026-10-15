@@ -44,7 +44,7 @@ Two things a neighbouring product cannot truthfully copy as a pair: the audience
 
 The app is named **Moku**, confirmed by the owner on 2026-10-15. "Campus Social" was the working name; the screens, emails, policy pages and docs now say Moku. Technical identifiers (package ids, URL scheme, database name) still use the old name.
 
-The look is binding: the monochrome system taken from the Dribbble shot "Social Media App Design" by Sujon Hossain, meaning near-black ink for selection and action, a light grey ground with white cards, pill tabs, rounded-square avatars and an icon-only floating tab bar. Lilac stays only as the identity colour for anonymous profiles. There is no logo yet; the icon and splash are still plain placeholders drawn for the project. The system fonts are used.
+The visual direction is binding and comes from the sign-in reference supplied by the owner (`signin-reference.png`): a calm plain form beside a large rounded black-and-white photo panel with a concave notch, a translucent dark caption card, a near-black full-width primary button, hairline-bordered inputs, near-monochrome with a soft lavender and pink accent, and a bundled open-licensed typeface (Figtree). It replaces the earlier Dribbble "Social Media App Design" direction recorded on 2026-10-15. Identity colours (indigo for known, plum for anonymous) are never the only signal. The logomark is an original placeholder and there is no final logo yet; the icon and splash are plain placeholders.
 
 Binding commitments are honesty about anonymity (never "screenshot proof"), no dark patterns, and no tracking.
 

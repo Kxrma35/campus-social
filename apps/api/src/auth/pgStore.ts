@@ -374,6 +374,14 @@ export class PgAuthStore implements AuthStore {
     }
   }
 
+  async isHandleTaken(universityId: string, handle: string): Promise<boolean> {
+    const r = await this.pool.query(
+      `select 1 from profiles where university_id = $1 and handle = $2 limit 1`,
+      [universityId, handle],
+    );
+    return (r.rowCount ?? 0) > 0;
+  }
+
   async getProfileBasics(profileId: string) {
     const r = await this.pool.query(`select handle, avatar_key from profiles where id = $1`, [
       profileId,

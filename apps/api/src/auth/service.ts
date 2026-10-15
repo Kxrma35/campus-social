@@ -5,6 +5,7 @@ import type { Mailer } from "./mailer.js";
 import {
   checkAge,
   emailDomain,
+  checkHandle,
   handleBase,
   normalizeEmail,
   reverifyDueAt,
@@ -28,6 +29,7 @@ export interface SignupVerifyInput {
   code: string;
   dateOfBirth: string;
   displayName: string;
+  handle?: string | null;
   course?: string | null;
   studyYear?: number | null;
   deviceLabel?: string | null;
@@ -97,11 +99,21 @@ export class AuthService {
       throw new AuthError("must_be_18", 403, "You must be 18 or older to use this app.");
     }
 
+    let chosen: string | null = null;
+    if (input.handle) {
+      const checked = checkHandle(input.handle);
+      if (!checked.ok) throw new AuthError("invalid_handle", 422, checked.reason);
+      if (await this.store.isHandleTaken(university.id, checked.handle)) {
+        throw new AuthError("handle_taken", 409, "That handle is already taken. Choose another.");
+      }
+      chosen = checked.handle;
+    }
+
     await this.consume(email, "signup", input.code);
 
     const base = handleBase(input.displayName);
-    for (let i = 0; i < HANDLE_RETRIES; i += 1) {
-      const handle = `${base}_${randomInt(1000, 10_000)}`;
+    for (let i = 0; i < (chosen ? 1 : HANDLE_RETRIES); i += 1) {
+      const handle = chosen ?? `${base}_${randomInt(1000, 10_000)}`;
       const created = await this.store.createAccountWithKnownProfile({
         universityId: university.id,
         email,
@@ -128,6 +140,7 @@ export class AuthService {
       if (created.kind === "email_taken") {
         throw new AuthError("account_exists", 409, "An account already exists for this email.");
       }
+      if (chosen) throw new AuthError("handle_taken", 409, "That handle is already taken. Choose another.");
       // handle_taken: try another suffix
     }
     throw new AuthError("try_again", 503, "Could not create the account. Please try again.");

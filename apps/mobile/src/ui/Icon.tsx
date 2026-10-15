@@ -1,5 +1,5 @@
-import { Platform } from "react-native";
 import Svg, { Circle, Path } from "react-native-svg";
+import { hiddenFromReaders } from "./a11y";
 
 export type IconName =
   | "heart"
@@ -52,11 +52,6 @@ const PATHS: Record<IconName, { d: string; fill?: boolean }[]> = {
     { d: "M8.5 11V8a3.5 3.5 0 0 1 7 0v3" },
   ],
 };
-
-const hiddenFromReaders =
-  Platform.OS === "web"
-    ? ({ "aria-hidden": true } as object)
-    : { accessibilityElementsHidden: true, importantForAccessibility: "no" as const };
 
 export function Icon({
   name,

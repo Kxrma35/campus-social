@@ -128,6 +128,7 @@ export interface SignupInput {
   code: string;
   dateOfBirth: string;
   displayName: string;
+  handle?: string | null;
   course?: string | null;
   studyYear?: number | null;
   confirmAge18: true;
