@@ -1,4 +1,4 @@
-# Moku App (working name)
+# Moku
 
 Student-only social app with a known profile and an optional anonymous profile. V1 targets USIU-Africa.
 Specs and plans: see `BUILD_PLAN.md`, `research/`, and `legal/`.
@@ -7,7 +7,7 @@ Specs and plans: see `BUILD_PLAN.md`, `research/`, and `legal/`.
 
 ```
 apps/api/            Node/TypeScript API (Fastify)
-apps/mobile/         Expo React Native app (not yet generated, see its README)
+apps/mobile/         Expo React Native app (see its README)
 db/migrations/       PostgreSQL schema and roles
 research/            Interview guide and survey
 legal/               Privacy policy, terms, community rules, DPIA (drafts)
@@ -231,13 +231,13 @@ npm run lifecycle            # run once
 Tested with 99 tests: unit and HTTP tests against in-memory stores, plus 19 integration tests against real PostgreSQL 16 (2026-10-12) that connect as the actual `auth_service` and `account_lifecycle` roles. Migrations `0001` to `0003` apply in order, and `0003` re-applies cleanly.
 
 Known limits:
-- **Anonymous profiles:** closing, purging and exporting stop (HTTP 501, or "skipped" in the sweep) for any account that has an anonymous link, because resolving it needs the M4 encryption. This is deliberate: it never leaves anonymous content behind or hands back a partial export.
-- **Bans:** a ban sets the status but does not yet remove content. That belongs to M3 moderation.
+- **Anonymous profiles:** closing, purging and exporting need the link keys (see M4). Without them they stop (HTTP 501, or "skipped" in the sweep) for any account that has an anonymous link, which is deliberate: it never leaves anonymous content behind or hands back a partial export.
+- **Bans:** a ban closes the account, records a fingerprint of the email so it cannot sign up again, and hides the profiles' posts and comments (migration `0005`). One appeal is allowed.
 - **Photo descriptions (alt text):** the person posting can describe each photo (`altTexts` on `POST /posts`, or `PATCH /photos/:id` for the uploader to change or clear it later; max 500 characters, optional). Stored on the upload row by migration `0010_photo_alt_text.sql`, so it is hidden, exported and purged with the photo; shown to moderators with the photo. Verified with in-memory tests and against real PostgreSQL (grants, check constraint, uploader-only edits, anonymous profile, moderator view, data export).
 - **Profile photo (known profiles only):** `PUT /me/avatar` with the id of an upload the student just made, `DELETE /me/avatar`, and `GET /profiles/:id/avatar` for signed-in students of the same campus. Posts, comments, notifications, profiles and your own details carry `hasAvatar`. A database check refuses a photo on an anonymous profile, and the service refuses it too. A moderator who opens a reported profile sees the photo and can remove it with a recorded reason (`POST /admin/profiles/:id/avatar/remove`), separately from any penalty; the file is released and deleted by the next clean-up. Migration `0013_profile_photo.sql`. Verified with in-memory tests and against real PostgreSQL (the constraint, the moderator's narrow grants, cleanup).
 - **Email:** one-time codes are sent over SMTP (`SMTP_URL`, `MAIL_FROM`; any provider that offers SMTP). Plain text only, no links or tracking, code never in the subject; STARTTLS is enforced in production; a failed send is one generic 503 that does not reveal whether an address has an account; addresses and codes are never logged. Without `SMTP_URL`, development prints codes to the API log and the console mailer refuses to run in production. Tested against a local SMTP sink, **not yet against a real provider**: confirm delivery, SPF/DKIM/DMARC and spam placement for a USIU address before any pilot.
 - **Reminders:** the maintenance job (`npm run lifecycle`) emails a student before the re-verification deadline (default 30 and 7 days before) and a read-only student before the account closes (default 7 days before). Each reminder is sent once per cycle: a record of which reminder went to which account (no message text) is kept in `account_reminders`, so running the job again does not repeat it, a failed send is retried on the next run, and a successful re-verification starts a fresh cycle. If a run is missed, only the most urgent reminder that applies is sent. **Nothing sends them unless the job is run**, and in production they need `SMTP_URL`; without it the job skips reminders and says so. Plain text, no links, no tracking.
-- **Still to build in M1:** optional two-factor login and per-IP rate limiting at the edge.
+- **Still to build in M1:** optional two-factor login. Per-IP rate limiting is built into the API (`registerRateLimit`); behind a proxy set `TRUST_PROXY_HOPS` so it sees each student's address.
 
 ## M2 status (posting, feed and follows)
 
@@ -254,7 +254,7 @@ Built: text posts with up to 4 photos, edit and soft-delete, comments, reactions
 | Own lists | `GET /me/following`, `GET /me/followers` |
 | Notifications | `GET /notifications`, `POST /notifications/read` |
 
-Requests act as the signed-in student's known profile. `X-Acting-As: anonymous` selects the anonymous profile, which returns `501` until M4 builds it.
+Requests act as the signed-in student's known profile. `X-Acting-As: anonymous` selects the anonymous profile (see M4). It returns `501` when the link keys are not configured and `404` when the student has not created one.
 
 Design rules worth knowing:
 - **Profiles only:** the content layer never sees an account id. A test fails if any content module mentions accounts, identity or sessions, and `app_api` has no database access to them.
@@ -327,7 +327,7 @@ Design rules worth knowing:
 Known limits:
 - **Phrase matching is crude.** It misses indirect wording, slang, misspellings and other languages, and it flags quotes and lyrics. It supplements human reports; it does not replace them. Review the phrase list with USIU counselling staff before launch.
 - **Helpline details are unconfirmed.** `SUPPORT_RESOURCES_JSON` is empty until real numbers are confirmed, so flagged authors currently see a message without contact details.
-- **Anonymous profiles do not exist yet** (M4). Penalties and reports from anonymous profiles are wired through a blind index and tested with fixtures, but return `501` in the running API until M4 supplies the key handling.
+- **Anonymous profiles and moderation:** penalties and reports for anonymous profiles go through the blind index. They need the link keys, so without them they return `501` (see M4).
 - **Bans and anonymous content.** Banning from a known profile hides the known profile's content, but the anonymous profile's id is encrypted, so its content is not hidden until M4 can resolve it. The same gap applies to restoring it on an upheld appeal.
 - **Moderator tokens are bearer secrets** with no expiry or second factor. Fine for a small founding team behind a VPN; revisit before adding staff.
 - **Night and exam coverage** is a people question. Nothing here alerts anyone when a report is overdue.
@@ -470,9 +470,13 @@ Found when the legal drafts were checked against the code (2026-10-12). Details 
 - ~~**G8** The data export is partial.~~ **Fixed and verified** (export schema v2).
 - Also noted: there is no appeal deadline; the banned-email fingerprint is an unsalted SHA-256; anonymous posts store an exact timestamp (only the API view is rounded).
 
-## Not done yet
+## Status and open items
 
-- Hosting choice (open decision #1)
-- Expo mobile app
-- Encryption and blind-index code for the identity link
-- Real USIU email domain and staff/student distinction (university row is seeded inactive)
+Built and tested: accounts and verification, posting, feeds and follows, moderation with the web console, anonymous profiles with the encrypted link and audited unmasking, retention and cleanup, the Expo app (feed, composer with posting-as switch, post detail, profiles, settings, sign-up and sign-in), profile photos, data export and closure.
+
+Still open:
+
+- **Decisions:** hosting and region, legal entity and team details, staff versus student email rules, the unmasking policy, night and exam moderation cover, crisis helpline numbers, the final brand and logo (see `BUILD_PLAN.md`).
+- **Not built:** optional two-factor sign-in, push notifications, blocking or muting a person, automated image screening, pre-moderation of profile photos.
+- **Not done outside the code:** the data protection lawyer review of `legal/`, the breach procedure rehearsal and key backup drill (G6, G7), scheduling the maintenance sweep and backups, a first run on a real Android phone and a screen reader pass, a real package id and store assets.
+- **Real USIU email domain:** the university row is seeded inactive until the domain and the staff versus student distinction are confirmed.

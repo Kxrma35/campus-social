@@ -93,8 +93,9 @@ have not been exercised on hardware. Do that before any pilot.
 - No push notifications; notifications are in-app only.
 - The icon and splash are placeholders, and the package id is a placeholder (see "Building a pilot app").
 - Legal documents are drafts (see `../../legal`); a static site can be built from them but is not hosted anywhere.
-- `npm audit` reports vulnerabilities in Expo build tooling. Do not use `npm audit fix --force`;
-  it downgrades Expo. Review them when upgrading the SDK.
+- `npm audit` reports vulnerabilities, almost all in Expo build tooling. Do not use `npm audit fix --force`;
+  it downgrades Expo. One is in the shipped app (`decode-uri-component` through `expo-router`, a denial of
+  service on a hostile link); see `docs/licences.md` at the repository root. Review them when upgrading the SDK.
 
 ## Privacy behaviour worth knowing
 

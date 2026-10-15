@@ -40,7 +40,7 @@ Checked on 2026-10-12 against the app's configuration and dependency list. This 
 - [x] **The sign-in token is held in the platform's secure storage** (`expo-secure-store`). Nothing else is kept on the device between launches: no profile data, no posts, no credentials.
 - [x] **The Android app asks for no camera, microphone or storage permission.** Photos are chosen with the system photo picker, which gives the app only the photos you select. Android cloud backup of app data is switched off.
 - [x] **No push notifications exist.** The Privacy Policy section on push tokens must stay switched off until they do.
-- [ ] **Every dependency, font and image has a recorded licence and source.** The artwork is recorded below; the dependency licence review has not been done.
+- [x] **Every dependency, font and image has a recorded licence and source.** Recorded in `docs/licences.md`, including a scripted review of every production dependency on 2026-10-15 (no trackers or analytics found; two LGPL and three MPL packages noted there). To be re-run before each release.
 - [ ] **A web page that sets cookies or loads third-party code would need a cookie banner and a cookie list here.** The policy pages built from these documents set no cookies and load nothing from other sites. Re-check this if any other page is added.
 
 ## Licence and source record (fonts, images, data)
