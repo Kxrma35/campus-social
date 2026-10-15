@@ -2,6 +2,7 @@ import Fastify, { type FastifyRequest } from "fastify";
 import { z, ZodError } from "zod";
 import type { PhotoStore } from "../content/photos.js";
 import { ApiError } from "../errors.js";
+import { registerConsole } from "./console.js";
 import type { AdminService } from "./service.js";
 import type { Moderator } from "./store.js";
 
@@ -66,6 +67,8 @@ export function buildAdminApp(deps: AdminAppDeps) {
   }
 
   app.get("/health", async () => ({ status: "ok" }));
+
+  registerConsole(app);
 
   app.get("/admin/queue", async (req) => {
     await moderator(req);

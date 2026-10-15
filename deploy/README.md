@@ -44,6 +44,7 @@ Check the API with `curl http://127.0.0.1:3000/health`.
 
 ## Before this is a real deployment
 
+- **The moderator console is served by the admin service** at `/console`, on the same port as the admin API. Keep that port private. Reach it from a moderator's machine with an SSH tunnel (`ssh -L 3100:127.0.0.1:3100 host`) or a private network, then open `http://127.0.0.1:3100/console`.
 - **TLS and a public address are not included.** The API speaks plain HTTP on `127.0.0.1:3000`. Put a reverse proxy or the platform's load balancer in front, terminate TLS there, and forward only `/` to the API. **Never expose the admin port (3100).**
 - **Photos default to a local volume**, which means exactly **one** API instance, and that volume must be backed up with the database. Set `PHOTO_STORAGE=s3` (below) to remove that limit.
 - **Backups are not included.** Take database backups on a schedule, back up the link keys separately from the database, and run the restore drill in `../ops/KEY_CUSTODY_AND_RESTORE.md`.

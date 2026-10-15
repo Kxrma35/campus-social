@@ -254,6 +254,18 @@ Built: student reporting, automatic hiding at three different reporters, an urge
 | `GET /admin/appeals`, `POST /admin/appeals/:id/decision` | Review and decide appeals. An upheld appeal restores the account, profile and content the ban hid. |
 | `GET /admin/photos/:id` | View a reported photo. |
 
+### Moderator console
+
+The admin service also serves a web page for moderators at `/console` (the root `/` redirects there). Open `http://127.0.0.1:3100/console` where the admin service runs, or reach it through an SSH tunnel; **it must never be exposed to the internet**.
+
+- **Sign in** with a moderator token. It is kept for the browser tab only (`sessionStorage`) and cleared on sign out or when it is revoked.
+- **Reports:** the queue with urgent and overdue items marked in words, who wrote the content, the reasons and the due time. Open an item to see the content, photos with the author's description, every report with its detail, and earlier actions.
+- **Resolve** (uphold or dismiss) and **penalise** (warning, suspension with an end date, ban) each need an explicit second confirmation that says what will happen. A penalty needs a reason of at least 10 characters.
+- **Appeals:** open, upheld and denied, with the student's message. A decision needs a reason and a confirmation.
+- **What it never shows:** who owns an anonymous profile, or who reported. It uses only the admin API above.
+- **Safety:** one HTML file, one script and one stylesheet, no third-party code, and a content security policy that blocks inline script and style. Everything from students is inserted as plain text, never as markup (a test fails the build if the script ever uses `innerHTML` and similar). Tested in a simulated browser against hostile content, and exercised in a real Chrome against a real PostgreSQL database (sign in, queue, photo with the author's description, resolve, appeal decision, penalty form, policy headers, hostile markup shown as text). That run found two styling bugs, both fixed and covered by tests. **Not yet checked:** phone width in a real browser, a screen reader, or keyboard-only use by a person.
+- **Not included:** moderator accounts or roles beyond tokens, search, bulk actions, or a screen for the unmask workflow (that stays a separate, audited command).
+
 Issue and revoke moderator tokens (printed once, stored hashed), run by the operator:
 
 ```bash
