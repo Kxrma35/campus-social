@@ -33,12 +33,21 @@ Nothing is installed as a background service. Start and stop things yourself.
 
 ## Configuration
 
-Everything is configured through environment variables. **Nothing loads a `.env` file for you**, so export it into your shell first:
+Everything is configured through environment variables. **Nothing loads a `.env` file for you**, so write the values you need into a `.env` file in the repository root (it is git-ignored) and export it into your shell first. A minimal development file:
 
 ```bash
-cp .env.example .env          # then edit; .env is git-ignored
+NODE_ENV=development
+DATABASE_URL=postgres://auth_service:YOUR_PASSWORD@127.0.0.1:5432/campus_social
+CONTENT_DATABASE_URL=postgres://app_api:YOUR_PASSWORD@127.0.0.1:5432/campus_social
+LIFECYCLE_DATABASE_URL=postgres://account_lifecycle:YOUR_PASSWORD@127.0.0.1:5432/campus_social
+CODE_HMAC_KEY=a-random-string-of-at-least-32-characters
+```
+
+```bash
 set -a; . ./.env; set +a      # export every variable in it
 ```
+
+The tables below list every other variable. For containers, copy the templates in `deploy/` instead (`env.api.example`, `env.admin.example`, `env.owner.example`).
 
 Never commit real values. Generate secrets with `openssl rand -base64 48` (the code key) and `openssl rand -base64 32` (the link keys). Settings are validated at start-up, so a missing or malformed value stops the process with a message rather than running half-configured.
 
