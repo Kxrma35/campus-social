@@ -162,6 +162,35 @@ export class ContentService {
     return bytes!;
   }
 
+  async setAvatar(actor: Actor, uploadId: string): Promise<{ ok: true }> {
+    this.requireWrite(actor);
+    if (actor.kind !== "known") {
+      throw new ApiError("avatar_known_only", 403, "Only a known profile can have a photo.");
+    }
+    const outcome = await this.store.setAvatar({ profileId: actor.profileId, uploadId, now: this.now() });
+    if (outcome === "invalid") {
+      throw new ApiError("photo_invalid", 422, "That photo cannot be used. Upload it again.");
+    }
+    return { ok: true };
+  }
+
+  async removeAvatar(actor: Actor): Promise<{ ok: true }> {
+    this.requireWrite(actor);
+    if (actor.kind !== "known") {
+      throw new ApiError("avatar_known_only", 403, "Only a known profile can have a photo.");
+    }
+    await this.store.clearAvatar(actor.profileId);
+    return { ok: true };
+  }
+
+  async readAvatar(actor: Actor, profileId: string): Promise<Buffer> {
+    const key = await this.store.getAvatarKey(actor.profileId, profileId);
+    if (!key) this.notFound();
+    const bytes = await this.photos.get(key!);
+    if (!bytes) this.notFound();
+    return bytes!;
+  }
+
   async createPost(
     actor: Actor,
     input: {
@@ -501,6 +530,7 @@ export class ContentService {
       kind: a.kind,
       handle: a.handle,
       displayName: a.kind === "anonymous" ? null : a.displayName,
+      hasAvatar: a.kind === "known" && a.hasAvatar,
     };
   }
 
@@ -565,6 +595,7 @@ export class ContentService {
       followingCount: r.followingCount,
       viewerFollows: r.viewerFollows,
       isSelf: r.profileId === viewerProfileId,
+      hasAvatar: r.kind === "known" && r.hasAvatar,
     };
   }
 }

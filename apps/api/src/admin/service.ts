@@ -148,6 +148,23 @@ export class AdminService {
     return { status: "applied" };
   }
 
+  async removeAvatar(
+    moderator: Moderator,
+    input: { profileId: string; note: string },
+  ): Promise<{ status: "removed" }> {
+    const note = input.note.trim();
+    if (note.length < MIN_NOTE) {
+      throw new ApiError("note_required", 422, `Record a reason of at least ${MIN_NOTE} characters.`);
+    }
+    const removed = await this.store.removeAvatar({
+      profileId: input.profileId,
+      moderator: moderator.name,
+      note,
+    });
+    if (!removed) throw new ApiError("not_found", 404, "That profile has no photo.");
+    return { status: "removed" };
+  }
+
   async appeals(status: "open" | "upheld" | "denied"): Promise<{ items: AppealRow[] }> {
     return { items: await this.store.listAppeals(status) };
   }

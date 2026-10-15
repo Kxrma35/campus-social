@@ -79,6 +79,23 @@ export function registerContentRoutes(
       .send(bytes);
   });
 
+  app.put("/me/avatar", async (req) => {
+    const { photoId } = z.object({ photoId: id }).strict().parse(req.body);
+    return content.setAvatar(await actor(req), photoId);
+  });
+
+  app.delete("/me/avatar", async (req) => content.removeAvatar(await actor(req)));
+
+  app.get("/profiles/:id/avatar", async (req, reply) => {
+    const { id: profileId } = idParams.parse(req.params);
+    const bytes = await content.readAvatar(await actor(req), profileId);
+    return reply
+      .header("content-type", "image/jpeg")
+      .header("cache-control", "private, no-cache")
+      .header("x-content-type-options", "nosniff")
+      .send(bytes);
+  });
+
   app.post("/posts", async (req, reply) => {
     const body = createPost.parse(req.body);
     const post = await content.createPost(await actor(req), body);

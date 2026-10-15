@@ -102,5 +102,8 @@ export interface AdminStore {
     note: string;
   }): Promise<boolean>;
 
+  /** Clears a known profile's photo and records the action. False when it has none. */
+  removeAvatar(input: { profileId: string; moderator: string; note: string }): Promise<boolean>;
+
   photoStorageKey(uploadId: string): Promise<string | null>;
 }

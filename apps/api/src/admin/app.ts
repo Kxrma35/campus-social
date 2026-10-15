@@ -111,6 +111,13 @@ export function buildAdminApp(deps: AdminAppDeps) {
     return reply.code(201).send(out);
   });
 
+  app.post("/admin/profiles/:id/avatar/remove", async (req) => {
+    const m = await moderator(req);
+    const { id: profileId } = z.object({ id }).parse(req.params);
+    const { note } = z.object({ note: z.string().max(1000) }).strict().parse(req.body);
+    return deps.admin.removeAvatar(m, { profileId, note });
+  });
+
   app.get("/admin/appeals", async (req) => {
     await moderator(req);
     const { status } = z

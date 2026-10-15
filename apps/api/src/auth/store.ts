@@ -40,6 +40,7 @@ export interface KnownProfileDetails {
   displayName: string;
   course: string | null;
   studyYear: number | null;
+  hasAvatar: boolean;
 }
 
 export type UpdateProfileResult = "updated" | "rate_limited" | "handle_taken" | "not_found";

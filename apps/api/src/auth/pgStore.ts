@@ -224,7 +224,8 @@ export class PgAuthStore implements AuthStore {
 
   async getKnownProfileDetails(profileId: string) {
     const r = await this.pool.query(
-      `select id, handle, display_name, course, study_year
+      `select id, handle, display_name, course, study_year,
+            avatar_upload_id is not null as has_avatar
          from profiles where id = $1 and kind = 'known' and deleted_at is null`,
       [profileId],
     );
@@ -236,6 +237,7 @@ export class PgAuthStore implements AuthStore {
       displayName: row.display_name as string,
       course: (row.course as string | null) ?? null,
       studyYear: (row.study_year as number | null) ?? null,
+      hasAvatar: row.has_avatar === true,
     };
   }
 

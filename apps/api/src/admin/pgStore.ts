@@ -123,6 +123,19 @@ export class PgAdminStore implements AdminStore {
         height: r.height,
         altText: r.alt_text ?? null,
       }));
+    } else if (kind === "profile") {
+      const ph = await this.pool.query(
+        `select u.id, u.width, u.height, u.alt_text
+           from profiles t join photo_uploads u on u.id = t.avatar_upload_id
+          where t.id = $1 and t.kind = 'known'`,
+        [id],
+      );
+      photos = ph.rows.map((r) => ({
+        uploadId: r.id,
+        width: r.width,
+        height: r.height,
+        altText: r.alt_text ?? null,
+      }));
     } else if (kind === "comment") {
       const c = await this.pool.query(`select post_id from comments where id = $1`, [id]);
       postId = c.rows[0]?.post_id ?? null;
@@ -287,6 +300,38 @@ export class PgAdminStore implements AdminStore {
         );
       }
       await client.query("commit");
+    } catch (err) {
+      await client.query("rollback").catch(() => undefined);
+      throw err;
+    } finally {
+      client.release();
+    }
+  }
+
+  async removeAvatar(input: { profileId: string; moderator: string; note: string }): Promise<boolean> {
+    if (!UUID_RE.test(input.profileId)) return false;
+    const client = await this.pool.connect();
+    try {
+      await client.query("begin");
+      const cur = await client.query(
+        `select avatar_upload_id from profiles where id = $1 and kind = 'known' for update`,
+        [input.profileId],
+      );
+      const uploadId: string | null = cur.rows[0]?.avatar_upload_id ?? null;
+      if (!uploadId) {
+        await client.query("rollback");
+        return false;
+      }
+      await client.query(
+        `insert into moderation.actions (kind, moderator, target_kind, target_id, note)
+         values ('avatar_removed'::moderation_action_kind, $1, 'profile', $2, $3)`,
+        [input.moderator, input.profileId, input.note],
+      );
+      await client.query(`update profiles set avatar_upload_id = null where id = $1`, [input.profileId]);
+      // Released, so the retention job deletes the file with other unattached uploads.
+      await client.query(`update photo_uploads set attached_at = null where id = $1`, [uploadId]);
+      await client.query("commit");
+      return true;
     } catch (err) {
       await client.query("rollback").catch(() => undefined);
       throw err;

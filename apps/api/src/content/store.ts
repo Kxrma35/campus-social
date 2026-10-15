@@ -101,5 +101,9 @@ export interface ContentStore {
   countPendingUploads(profileId: string): Promise<number>;
   setPhotoAltText(uploadId: string, profileId: string, altText: string | null): Promise<boolean>;
   getPhotoUpload(uploadId: string): Promise<PhotoUploadRow | null>;
+  setAvatar(input: { profileId: string; uploadId: string; now: Date }): Promise<"ok" | "invalid">;
+  clearAvatar(profileId: string): Promise<void>;
+  /** Storage key of the profile's photo when this viewer may see it, else null. */
+  getAvatarKey(viewerProfileId: string, profileId: string): Promise<string | null>;
   universityOfProfile(profileId: string): Promise<string | null>;
 }

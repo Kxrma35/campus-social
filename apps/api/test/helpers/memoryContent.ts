@@ -27,6 +27,7 @@ interface MProfile {
   course: string | null;
   universityId: string;
   deleted: boolean;
+  avatarUploadId?: string | null;
 }
 interface MPost {
   id: string;
@@ -112,7 +113,13 @@ export class MemoryContentStore implements ContentStore {
 
   private authorRow(id: string): AuthorRow {
     const p = this.profiles.get(id)!;
-    return { profileId: p.id, kind: p.kind, handle: p.handle, displayName: p.displayName };
+    return {
+      profileId: p.id,
+      kind: p.kind,
+      handle: p.handle,
+      displayName: p.displayName,
+      hasAvatar: p.kind === "known" && !!p.avatarUploadId,
+    };
   }
 
   private visiblePost(p: MPost, viewer: string): boolean {
@@ -350,6 +357,7 @@ export class MemoryContentStore implements ContentStore {
       followerCount: this.follows.filter((f) => f.followee === id).length,
       followingCount: this.follows.filter((f) => f.follower === id).length,
       viewerFollows: this.follows.some((f) => f.follower === viewer && f.followee === id),
+      hasAvatar: p.kind === "known" && !!p.avatarUploadId,
     };
   }
 
@@ -465,6 +473,34 @@ export class MemoryContentStore implements ContentStore {
       universityId: owner.universityId,
       postVisible: !!post && !post.deletedAt && !post.hidden,
     };
+  }
+
+  async setAvatar(input: { profileId: string; uploadId: string; now: Date }) {
+    const u = this.uploads.get(input.uploadId);
+    const p = this.profiles.get(input.profileId);
+    if (!u || !p || p.kind !== "known" || u.profileId !== input.profileId || u.attached) return "invalid" as const;
+    if (p.avatarUploadId) {
+      const old = this.uploads.get(p.avatarUploadId);
+      if (old) old.attached = false;
+    }
+    u.attached = true;
+    p.avatarUploadId = u.id;
+    return "ok" as const;
+  }
+
+  async clearAvatar(profileId: string) {
+    const p = this.profiles.get(profileId);
+    if (!p?.avatarUploadId) return;
+    const old = this.uploads.get(p.avatarUploadId);
+    if (old) old.attached = false;
+    p.avatarUploadId = null;
+  }
+
+  async getAvatarKey(viewerProfileId: string, profileId: string) {
+    const p = this.profiles.get(profileId);
+    if (!p || p.deleted || p.kind !== "known" || !p.avatarUploadId) return null;
+    if (!this.sameCampus(viewerProfileId, profileId)) return null;
+    return this.uploads.get(p.avatarUploadId)?.storageKey ?? null;
   }
 
   async universityOfProfile(profileId: string) {

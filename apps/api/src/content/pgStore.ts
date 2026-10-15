@@ -38,6 +38,7 @@ const POST_COLUMNS = `
   to_char(p.created_at at time zone 'UTC', ${TS_FMT}) || '|' || p.id::text as cursor_key,
   a.id as author_id, a.kind as author_kind, a.handle as author_handle,
   a.display_name as author_display_name,
+  (a.kind = 'known' and a.avatar_upload_id is not null) as author_has_avatar,
   (select count(*)::int from reactions r where r.post_id = p.id) as reaction_count,
   (select count(*)::int from comments c
     where c.post_id = p.id and c.deleted_at is null and c.hidden_at is null) as comment_count,
@@ -55,11 +56,13 @@ const COMMENT_COLUMNS = `
   to_char(c.created_at at time zone 'UTC', ${TS_FMT}) || '|' || c.id::text as cursor_key,
   a.id as author_id, a.kind as author_kind, a.handle as author_handle,
   a.display_name as author_display_name,
+  (a.kind = 'known' and a.avatar_upload_id is not null) as author_has_avatar,
   (select count(*)::int from reactions r where r.comment_id = c.id) as reaction_count,
   exists (select 1 from reactions r where r.comment_id = c.id and r.profile_id = $1) as viewer_reacted`;
 
 const PROFILE_COLUMNS = `
   t.id, t.kind, t.handle, t.display_name, t.course, t.study_year,
+  (t.kind = 'known' and t.avatar_upload_id is not null) as has_avatar,
   (select count(*)::int from posts p
     where p.author_profile_id = t.id and p.deleted_at is null and p.hidden_at is null) as post_count,
   (select count(*)::int from follows f join profiles fp on fp.id = f.follower_profile_id
@@ -79,6 +82,7 @@ function author(r: Row): AuthorRow {
     kind: r.author_kind,
     handle: r.author_handle,
     displayName: r.author_kind === "anonymous" ? null : r.author_display_name,
+    hasAvatar: r.author_kind === "known" && r.author_has_avatar === true,
   };
 }
 
@@ -122,6 +126,7 @@ function profileRow(r: Row): ProfileRow {
     followerCount: r.follower_count,
     followingCount: r.following_count,
     viewerFollows: r.viewer_follows,
+    hasAvatar: r.kind === "known" && r.has_avatar === true,
   };
 }
 
@@ -579,7 +584,8 @@ export class PgContentStore implements ContentStore {
               n.payload->>'postId' as post_id, n.payload->>'commentId' as comment_id,
               to_char(n.created_at at time zone 'UTC', ${TS_FMT}) || '|' || n.id::text as cursor_key,
               a.id as author_id, a.kind as author_kind, a.handle as author_handle,
-              a.display_name as author_display_name
+              a.display_name as author_display_name,
+              (a.kind = 'known' and a.avatar_upload_id is not null) as author_has_avatar
          from notifications n
          join profiles a on a.id = (n.payload->>'actorProfileId')::uuid
         where n.profile_id = $1 and a.deleted_at is null ${cursorSql}
@@ -664,6 +670,84 @@ export class PgContentStore implements ContentStore {
       universityId: row.university_id,
       postVisible: row.post_visible,
     };
+  }
+
+  async setAvatar(input: { profileId: string; uploadId: string; now: Date }): Promise<"ok" | "invalid"> {
+    const client = await this.pool.connect();
+    try {
+      await client.query("begin");
+      const up = await client.query(
+        `select id from photo_uploads
+          where id = $1 and profile_id = $2 and attached_at is null
+          for update`,
+        [input.uploadId, input.profileId],
+      );
+      if (up.rowCount === 0) {
+        await client.query("rollback");
+        return "invalid";
+      }
+      const prev = await client.query(
+        `select avatar_upload_id from profiles where id = $1 and kind = 'known' for update`,
+        [input.profileId],
+      );
+      if (prev.rowCount === 0) {
+        await client.query("rollback");
+        return "invalid";
+      }
+      const previousId: string | null = prev.rows[0].avatar_upload_id;
+      await client.query(`update photo_uploads set attached_at = $2 where id = $1`, [
+        input.uploadId,
+        input.now,
+      ]);
+      await client.query(`update profiles set avatar_upload_id = $2 where id = $1`, [
+        input.profileId,
+        input.uploadId,
+      ]);
+      if (previousId) {
+        // Released, so the retention job removes the old file with other unattached uploads.
+        await client.query(`update photo_uploads set attached_at = null where id = $1`, [previousId]);
+      }
+      await client.query("commit");
+      return "ok";
+    } catch (err) {
+      await client.query("rollback").catch(() => undefined);
+      throw err;
+    } finally {
+      client.release();
+    }
+  }
+
+  async clearAvatar(profileId: string): Promise<void> {
+    const client = await this.pool.connect();
+    try {
+      await client.query("begin");
+      const prev = await client.query(
+        `select avatar_upload_id from profiles where id = $1 and kind = 'known' for update`,
+        [profileId],
+      );
+      const previousId: string | null = prev.rows[0]?.avatar_upload_id ?? null;
+      if (previousId) {
+        await client.query(`update profiles set avatar_upload_id = null where id = $1`, [profileId]);
+        await client.query(`update photo_uploads set attached_at = null where id = $1`, [previousId]);
+      }
+      await client.query("commit");
+    } catch (err) {
+      await client.query("rollback").catch(() => undefined);
+      throw err;
+    } finally {
+      client.release();
+    }
+  }
+
+  async getAvatarKey(viewerProfileId: string, profileId: string): Promise<string | null> {
+    const r = await this.pool.query(
+      `select u.storage_key
+         from profiles t join photo_uploads u on u.id = t.avatar_upload_id
+        where t.id = $2 and t.kind = 'known' and t.deleted_at is null
+          and t.university_id = (select university_id from profiles where id = $1)`,
+      [viewerProfileId, profileId],
+    );
+    return r.rows[0]?.storage_key ?? null;
   }
 
   async universityOfProfile(profileId: string): Promise<string | null> {

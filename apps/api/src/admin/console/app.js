@@ -364,6 +364,9 @@
     mainEl.appendChild(reportsBlock(t.reports));
     mainEl.appendChild(actionsBlock(t.actions));
     mainEl.appendChild(resolveForm(t));
+    if (t.targetKind === "profile" && t.photos && t.photos.length > 0) {
+      mainEl.appendChild(avatarForm(t));
+    }
     mainEl.appendChild(penaltyForm(t));
     focusMain();
   }
@@ -535,6 +538,42 @@
       },
       "Resolve",
       false,
+    );
+    return form;
+  }
+
+  function avatarForm(t) {
+    var p = t.preview;
+    var form = el("form", { class: "card", "aria-label": "Remove the profile photo" });
+    var note = el("textarea", { id: "avatar-note", maxlength: "1000" });
+    form.appendChild(el("h3", { text: "Remove the profile photo" }));
+    form.appendChild(
+      el("p", {
+        class: "muted",
+        text: "The photo stops showing to students straight away and the file is deleted with the next clean-up. This is not a penalty; use the form below if the person should also be warned, suspended or banned.",
+      }),
+    );
+    form.appendChild(el("label", { for: "avatar-note" }, ["Reason (required, at least 10 characters, kept in the record)", note]));
+    withConfirm(
+      form,
+      {
+        validate: function () {
+          return note.value.trim().length < 10 ? "Write a reason of at least 10 characters." : null;
+        },
+        summary: function () {
+          return "This removes the profile photo of " + authorLine(p) + ". They can add a different photo later.";
+        },
+      },
+      async function () {
+        await call("POST", "/admin/profiles/" + encodeURIComponent(p.authorProfileId) + "/avatar/remove", {
+          note: note.value.trim(),
+        });
+        form.textContent = "";
+        form.appendChild(el("p", { class: "notice", role: "status", text: "The photo has been removed and the action recorded." }));
+        announce("Photo removed");
+      },
+      "Remove photo",
+      true,
     );
     return form;
   }

@@ -250,6 +250,14 @@ class FakeAdminStore implements AdminStore {
   async penalize(i: Parameters<AdminStore["penalize"]>[0]) {
     this.penalties.push(i);
   }
+  avatarRemovals: Parameters<AdminStore["removeAvatar"]>[0][] = [];
+  profilesWithPhoto = new Set<string>();
+  async removeAvatar(i: Parameters<AdminStore["removeAvatar"]>[0]) {
+    if (!this.profilesWithPhoto.has(i.profileId)) return false;
+    this.avatarRemovals.push(i);
+    this.profilesWithPhoto.delete(i.profileId);
+    return true;
+  }
   async listAppeals() {
     return this.appeals;
   }
@@ -302,6 +310,21 @@ describe("AdminService", () => {
     expect(new Date(items[2]!.dueAt).getTime() - new Date(items[2]!.oldestReportAt).getTime()).toBe(
       24 * HOUR,
     );
+  });
+
+  it("removes a profile photo with a recorded reason, and only when there is one", async () => {
+    expect(await code(make().removeAvatar(mod, { profileId: "known-1", note: "short" }))).toBe(
+      "note_required",
+    );
+    expect(await code(make().removeAvatar(mod, { profileId: "known-1", note: "A photo that breaks the rules" }))).toBe(
+      "not_found",
+    );
+    store.profilesWithPhoto.add("known-1");
+    await make().removeAvatar(mod, { profileId: "known-1", note: "  A photo that breaks the rules  " });
+    expect(store.avatarRemovals[0]).toMatchObject({
+      profileId: "known-1",
+      note: "A photo that breaks the rules",
+    });
   });
 
   it("requires a reason of at least 10 characters for every penalty", async () => {
@@ -413,6 +436,7 @@ describe("admin HTTP app", () => {
       ["GET", `/admin/targets/post/${pid}`],
       ["POST", `/admin/targets/post/${pid}/resolve`],
       ["POST", `/admin/profiles/${pid}/penalties`],
+      ["POST", `/admin/profiles/${pid}/avatar/remove`],
       ["GET", "/admin/appeals"],
       ["POST", `/admin/appeals/${pid}/decision`],
       ["GET", `/admin/photos/${pid}`],

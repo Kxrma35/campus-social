@@ -13,6 +13,8 @@ export interface AuthorView {
   handle: string;
   /** Real name; always null for anonymous profiles. */
   displayName: string | null;
+  /** True when a known profile has a photo others may see. Never true for anonymous. */
+  hasAvatar: boolean;
 }
 
 export interface PostView {
@@ -52,6 +54,7 @@ export interface ProfileView {
   followingCount: number;
   viewerFollows: boolean;
   isSelf: boolean;
+  hasAvatar: boolean;
 }
 
 export type NotificationKind = "comment" | "reaction" | "follow";
@@ -76,6 +79,7 @@ export interface AuthorRow {
   kind: ProfileKind;
   handle: string;
   displayName: string | null;
+  hasAvatar: boolean;
 }
 
 export interface PostRow {
@@ -124,6 +128,7 @@ export interface ProfileRow {
   followerCount: number;
   followingCount: number;
   viewerFollows: boolean;
+  hasAvatar: boolean;
 }
 
 export interface PhotoUploadRow {

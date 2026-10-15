@@ -213,6 +213,7 @@ export class MemoryAuthStore implements AuthStore {
       displayName: p.displayName,
       course: p.course ?? null,
       studyYear: p.studyYear ?? null,
+      hasAvatar: false,
     };
   }
 
