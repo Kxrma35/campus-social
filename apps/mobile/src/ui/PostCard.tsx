@@ -129,6 +129,12 @@ export function PostCard({
         </Pressable>
       ) : null}
 
+      {detail ? (
+        <Text variant="small" tone="muted" style={styles.counts}>
+          {`${post.commentCount} ${post.commentCount === 1 ? "comment" : "comments"}`}
+        </Text>
+      ) : null}
+
       <View style={styles.actions}>
         <Pressable
           accessibilityRole="button"
@@ -202,6 +208,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   photos: { paddingTop: spacing.md, paddingHorizontal: spacing.lg },
+  counts: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm },
   photoClip: { borderRadius: radius.xl, overflow: "hidden" },
   header: {
     flexDirection: "row",

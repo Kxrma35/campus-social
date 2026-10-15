@@ -133,3 +133,11 @@ The feed follows the sign-in language: calm, tinted ground, Figtree, near-black 
 - Below it, the `ProfileChip` "Posting as you" or "Posting as anonymous" and one sentence on what other students will see, announced politely when it changes. A 3px rule in the identity colour sits under the group.
 - Switching with photos attached asks first: the photos were prepared under the current profile and are removed on switching, with "Switch and remove photos" and "Keep my photos". Without photos the switch is immediate.
 - Unchanged: the first-few-times anonymity confirmation, photo descriptions, the character count under the field, and the support panel after a flagged post.
+
+## Post detail (2026-10-15)
+
+- One centred 640pt reading column: the post (larger text, photos leading), a quiet comment count, then the action row.
+- "Your post" groups the owner tools (edit text, photo descriptions, delete) in one section with a hairline, shown only to the author.
+- Comments open with a count and the comment form directly under the heading, so replying does not sit below a long list. The form states the identity it will use ("Commenting as you").
+- Comments are unboxed rows separated by a hairline with the same identity chips as the feed. An empty list reads "No comments yet. Be the first to reply."
+- Loading shows the static skeleton instead of a spinner.
