@@ -141,3 +141,10 @@ The feed follows the sign-in language: calm, tinted ground, Figtree, near-black 
 - Comments open with a count and the comment form directly under the heading, so replying does not sit below a long list. The form states the identity it will use ("Commenting as you").
 - Comments are unboxed rows separated by a hairline with the same identity chips as the feed. An empty list reads "No comments yet. Be the first to reply."
 - Loading shows the static skeleton instead of a spinner.
+
+## Profile, Me and Settings (2026-10-15)
+
+- Profile: a centred header with a large rounded-square avatar, the name, the identity chip and one quiet meta line; an anonymous profile says its owner is hidden from other students. Counts sit in a single row between two hairlines, with correct singular and plural words. Follow is the one primary action, report is a link beneath it. Posts use the same unboxed rows as the feed.
+- Me: the same header on the left, then the profile, anonymous and settings rows as rounded rows, and Sign out as a secondary button.
+- Settings: three groups with plain headings (Your profiles, Your account, About), rows as rounded rows, Sign out at the bottom. The "working title" line was removed now the name is decided.
+- All three share the 640pt column used by the feed and the post detail.

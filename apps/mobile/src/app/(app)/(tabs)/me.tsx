@@ -8,6 +8,7 @@ import { useSession } from "@/core/session/SessionProvider";
 import { spacing } from "@/theme/tokens";
 import { Avatar } from "@/ui/Avatar";
 import { Button } from "@/ui/Button";
+import { Column } from "@/ui/Column";
 import { ListRow } from "@/ui/ListRow";
 import { Notice } from "@/ui/Notice";
 import { ProfileChip } from "@/ui/ProfileChip";
@@ -36,61 +37,63 @@ export default function MeScreen() {
 
   return (
     <Screen padded={false}>
-      <View style={{ paddingHorizontal: spacing.lg, paddingTop: spacing.lg }}>
-        <StatusBanner />
-      </View>
+      <Column>
+        <View style={{ paddingHorizontal: spacing.lg, paddingTop: spacing.lg }}>
+          <StatusBanner />
+        </View>
 
-      <View style={{ paddingHorizontal: spacing.lg, gap: spacing.md }}>
-        {me ? (
-          <>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.lg }}>
-              <Avatar kind="known" name={me.displayName} size="xl" />
-              <View style={{ flex: 1, gap: spacing.xs }}>
-                <ProfileChip kind="known" self />
-                <Text variant="display">{me.displayName}</Text>
+        <View style={{ paddingHorizontal: spacing.lg, gap: spacing.md }}>
+          {me ? (
+            <>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.lg }}>
+                <Avatar kind="known" name={me.displayName} size="xl" />
+                <View style={{ flex: 1, gap: spacing.xs }}>
+                  <ProfileChip kind="known" self />
+                  <Text variant="display">{me.displayName}</Text>
+                </View>
               </View>
-            </View>
-            <Text tone="muted">
-              {`@${me.handle}`}
-              {me.course ? ` · ${me.course}` : ""}
-              {me.studyYear ? ` · Year ${me.studyYear}` : ""}
-            </Text>
-          </>
-        ) : error ? (
-          <Notice tone="error">{error}</Notice>
-        ) : (
-          <Text tone="muted">Loading…</Text>
-        )}
-      </View>
+              <Text tone="muted">
+                {`@${me.handle}`}
+                {me.course ? ` · ${me.course}` : ""}
+                {me.studyYear ? ` · Year ${me.studyYear}` : ""}
+              </Text>
+            </>
+          ) : error ? (
+            <Notice tone="error">{error}</Notice>
+          ) : (
+            <Text tone="muted">Loading…</Text>
+          )}
+        </View>
 
-      <View>
-        {me ? (
-          <ListRow
-            icon="person"
-            title="See my profile and posts"
-            onPress={() => router.push({ pathname: "/profile/[id]", params: { id: me.profileId } })}
-          />
-        ) : null}
-        {anon ? (
+        <View style={{ paddingTop: spacing.lg }}>
+          {me ? (
+            <ListRow
+              icon="person"
+              title="See my profile and posts"
+              onPress={() => router.push({ pathname: "/profile/[id]", params: { id: me.profileId } })}
+            />
+          ) : null}
+          {anon ? (
+            <ListRow
+              icon="lock"
+              title="See my anonymous posts"
+              detail={`@${anon.handle}`}
+              onPress={() => router.push({ pathname: "/profile/[id]", params: { id: anon.profileId } })}
+            />
+          ) : null}
           <ListRow
             icon="lock"
-            title="See my anonymous posts"
-            detail={`@${anon.handle}`}
-            onPress={() => router.push({ pathname: "/profile/[id]", params: { id: anon.profileId } })}
+            title="Manage anonymous profile"
+            detail={anon ? "You have an anonymous profile." : "You have not created one. It is optional."}
+            onPress={() => router.push("/settings/anonymous")}
           />
-        ) : null}
-        <ListRow
-          icon="lock"
-          title="Manage anonymous profile"
-          detail={anon ? "You have an anonymous profile." : "You have not created one. It is optional."}
-          onPress={() => router.push("/settings/anonymous")}
-        />
-        <ListRow title="Settings" onPress={() => router.push("/settings")} />
-      </View>
+          <ListRow title="Settings" onPress={() => router.push("/settings")} />
+        </View>
 
-      <View style={{ paddingHorizontal: spacing.lg, paddingBottom: spacing.xl }}>
-        <Button label="Sign out" variant="link" onPress={() => void signOut()} />
-      </View>
+        <View style={{ paddingHorizontal: spacing.lg, paddingTop: spacing.lg, paddingBottom: spacing.xl }}>
+          <Button label="Sign out" variant="secondary" onPress={() => void signOut()} />
+        </View>
+      </Column>
     </Screen>
   );
 }
