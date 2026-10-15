@@ -60,7 +60,7 @@ export function PostingAsSwitch({
               <Text variant="label" style={{ color: selected ? ink : t.text }}>
                 {o.title}
               </Text>
-              <Text variant="small" tone="muted" numberOfLines={2}>
+              <Text variant="small" tone="muted">
                 {o.detail}
               </Text>
             </View>

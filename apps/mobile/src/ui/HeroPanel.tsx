@@ -13,6 +13,7 @@ const NOTCH = 64;
 
 /** Original greyscale placeholder art. Not a photograph. */
 function PlaceholderArt() {
+  const t = useTheme();
   return (
     <Svg
       style={StyleSheet.absoluteFill}
@@ -24,15 +25,15 @@ function PlaceholderArt() {
     >
       <Defs>
         <LinearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-          <Stop offset="0" stopColor="#E7E5E9" />
-          <Stop offset="1" stopColor="#6F6B76" />
+          <Stop offset="0" stopColor={t.art.from} />
+          <Stop offset="1" stopColor={t.art.to} />
         </LinearGradient>
       </Defs>
       <Rect width="400" height="520" fill="url(#g)" />
-      <Circle cx="130" cy="170" r="150" fill="#FFFFFF" fillOpacity={0.35} />
-      <Circle cx="260" cy="250" r="120" fill="#2A2730" fillOpacity={0.45} />
-      <Circle cx="300" cy="120" r="70" fill="#FFFFFF" fillOpacity={0.5} />
-      <Rect x="0" y="360" width="400" height="160" fill="#1B1822" fillOpacity={0.25} />
+      <Circle cx="130" cy="170" r="150" fill={t.art.mist} fillOpacity={0.35} />
+      <Circle cx="260" cy="250" r="120" fill={t.art.shade} fillOpacity={0.45} />
+      <Circle cx="300" cy="120" r="70" fill={t.art.mist} fillOpacity={0.5} />
+      <Rect x="0" y="360" width="400" height="160" fill={t.art.floor} fillOpacity={0.25} />
     </Svg>
   );
 }

@@ -91,7 +91,8 @@ export function registerContentRoutes(
     const bytes = await content.readAvatar(await actor(req), profileId);
     return reply
       .header("content-type", "image/jpeg")
-      .header("cache-control", "private, no-cache")
+      // A short private cache so a feed of one person's posts does not refetch the photo each time.
+      .header("cache-control", "private, max-age=60")
       .header("x-content-type-options", "nosniff")
       .send(bytes);
   });

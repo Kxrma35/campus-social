@@ -25,6 +25,8 @@ export interface Palette {
   glass: string;
   onGlass: string;
   identity: { known: string; anon: string };
+  /** Greyscale placeholder art for the sign-in panel. */
+  art: { from: string; to: string; mist: string; shade: string; floor: string };
 }
 
 export const light: Palette = {
@@ -54,6 +56,7 @@ export const light: Palette = {
   glass: "rgba(27, 24, 34, 0.78)",
   onGlass: "#F6F4F7",
   identity: { known: "#3B3F9E", anon: "#9A2A6B" },
+  art: { from: "#E7E5E9", to: "#6F6B76", mist: "#F6F4F7", shade: "#2A2730", floor: "#1B1822" },
 };
 
 export const dark: Palette = {
@@ -83,6 +86,7 @@ export const dark: Palette = {
   glass: "rgba(20, 18, 26, 0.78)",
   onGlass: "#F6F4F7",
   identity: { known: "#A9AEFF", anon: "#F0A3CF" },
+  art: { from: "#E7E5E9", to: "#6F6B76", mist: "#F6F4F7", shade: "#2A2730", floor: "#1B1822" },
 };
 
 export type Scheme = "light" | "dark";

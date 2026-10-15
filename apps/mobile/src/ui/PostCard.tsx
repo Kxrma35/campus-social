@@ -95,7 +95,7 @@ export function PostCard({
             hasAvatar={author.hasAvatar}
           />
           <View style={styles.names}>
-            <Text variant="label" numberOfLines={1}>
+            <Text variant="label">
               {title}
             </Text>
             <Text variant="small" tone="muted">
