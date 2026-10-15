@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, View } from "react-native";
+import { Platform, Pressable, StyleSheet, View } from "react-native";
 import type { ReactNode } from "react";
 import { MIN_TARGET, radius, spacing } from "@/theme/tokens";
 import { Text } from "./Text";
@@ -35,7 +35,7 @@ export function Checkbox({
         ]}
       >
         {checked ? (
-          <Text style={{ color: t.onPrimary, fontWeight: "700" }} accessibilityElementsHidden>
+          <Text style={{ color: t.onPrimary, fontWeight: "700" }} {...(Platform.OS === "web" ? { "aria-hidden": true } : { accessibilityElementsHidden: true })}>
             ✓
           </Text>
         ) : null}

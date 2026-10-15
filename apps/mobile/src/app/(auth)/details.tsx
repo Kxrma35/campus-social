@@ -54,7 +54,7 @@ export default function DetailsScreen() {
     if (!y.ok) next.year = y.error;
     const dob = checkDateOfBirth(day, month, yearOfBirth);
     if (!dob.ok) next.dob = dob.error;
-    else if (dob.value && !isAtLeast18(dob.value)) next.age = "You must be 18 or older to use Campus Social.";
+    else if (dob.value && !isAtLeast18(dob.value)) next.age = "You must be 18 or older to use Moku.";
     if (!over18) next.age = next.age ?? "Confirm that you are 18 or older.";
     if (!accepted) next.terms = "Agree to the terms to continue.";
 

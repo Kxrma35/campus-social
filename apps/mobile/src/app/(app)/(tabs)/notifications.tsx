@@ -1,14 +1,15 @@
 import { router } from "expo-router";
 import { useCallback, useEffect } from "react";
-import { FlatList, RefreshControl, View } from "react-native";
+import { FlatList, Pressable, RefreshControl, StyleSheet, View } from "react-native";
 import type { AppNotification } from "@/core/api/types";
 import { describeError } from "@/core/lib/errors";
 import { timeAgo } from "@/core/lib/time";
 import { useIdentity } from "@/core/session/IdentityProvider";
 import { useSession } from "@/core/session/SessionProvider";
 import { usePagedList } from "@/core/usePagedList";
-import { spacing } from "@/theme/tokens";
+import { radius, spacing } from "@/theme/tokens";
 import { ActingSwitcher } from "@/ui/ActingSwitcher";
+import { Avatar } from "@/ui/Avatar";
 import { Button } from "@/ui/Button";
 import { Loading } from "@/ui/Loading";
 import { Notice } from "@/ui/Notice";
@@ -48,27 +49,44 @@ export default function NotificationsScreen() {
 
   return (
     <FlatList
-      style={{ backgroundColor: t.background }}
+      style={{ backgroundColor: t.ground }}
       data={list.items}
       keyExtractor={(n) => n.id}
-      contentContainerStyle={{ padding: spacing.lg, gap: spacing.md }}
-      ListHeaderComponent={<ActingSwitcher />}
+      contentContainerStyle={{ paddingTop: spacing.md, paddingBottom: spacing.xxl }}
+      ListHeaderComponent={
+        <View style={{ padding: spacing.lg }}>
+          <ActingSwitcher />
+        </View>
+      }
       refreshControl={<RefreshControl refreshing={list.refreshing} onRefresh={list.refresh} />}
       onEndReached={() => void list.loadMore()}
       renderItem={({ item }) => {
         const text = describe(item);
         const when = timeAgo(item.createdAt, undefined, { rounded: item.actor.kind === "anonymous" });
         return (
-          <Button
-            variant="secondary"
-            label={`${item.read ? "" : "New: "}${text} · ${when}`}
+          <Pressable
+            accessibilityRole="button"
             accessibilityLabel={`${item.read ? "" : "New. "}${text}, ${when}`}
             onPress={() =>
               item.postId
                 ? router.push({ pathname: "/post/[id]", params: { id: item.postId } })
                 : router.push({ pathname: "/profile/[id]", params: { id: item.actor.profileId } })
             }
-          />
+            style={({ pressed }) => [
+              styles.row,
+              { borderColor: t.hairline, backgroundColor: pressed ? t.primarySoft : t.card },
+            ]}
+          >
+            <Avatar kind={item.actor.kind} name={item.actor.displayName ?? item.actor.handle} size="md" />
+            <View style={styles.text}>
+              <Text variant="body" style={item.read ? undefined : { fontWeight: "700" }}>
+                {text}
+              </Text>
+              <Text variant="small" tone="muted">
+                {item.read ? when : `New · ${when}`}
+              </Text>
+            </View>
+          </Pressable>
         );
       }}
       ListEmptyComponent={
@@ -80,9 +98,27 @@ export default function NotificationsScreen() {
             <Button label="Try again" onPress={list.reload} />
           </View>
         ) : (
-          <Text tone="muted">Nothing yet. You will see replies, likes and new followers here.</Text>
+          <View style={{ padding: spacing.lg }}>
+            <Text tone="muted">Nothing yet. You will see replies, likes and new followers here.</Text>
+          </View>
         )
       }
     />
   );
 }
+
+const styles = StyleSheet.create({
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    minHeight: 64,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.sm,
+    borderRadius: radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  text: { flex: 1, gap: 2 },
+});

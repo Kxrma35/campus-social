@@ -1,6 +1,6 @@
-# Campus Social App: V1 Build Plan
+# Moku App: V1 Build Plan
 
-Status: draft, 2026-10-12. Source spec: `~/Downloads/Campus Social App — V1 Product Spec.docx` (Oct 10, 2026).
+Status: draft, 2026-10-12. Source spec: `~/Downloads/Moku App — V1 Product Spec.docx` (Oct 10, 2026).
 Working name only; the app's name and brand are still undecided.
 
 ## 1. Goal

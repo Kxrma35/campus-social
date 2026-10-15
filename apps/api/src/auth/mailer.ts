@@ -27,9 +27,9 @@ export function reminderMessage(r: ReverifyReminder): { subject: string; text: s
   const date = formatDeadline(r.deadline);
   if (r.kind === "due_soon") {
     return {
-      subject: `Campus Social: confirm your student email by ${date}`,
+      subject: `Moku: confirm your student email by ${date}`,
       text: [
-        `Your Campus Social account needs to be re-verified by ${date}, which is in ${plural(r.daysLeft, "day")}.`,
+        `Your Moku account needs to be re-verified by ${date}, which is in ${plural(r.daysLeft, "day")}.`,
         "",
         'To do it, open the app, go to Settings and choose "Confirm your email again". We will send a code to this address.',
         "",
@@ -37,14 +37,14 @@ export function reminderMessage(r: ReverifyReminder): { subject: string; text: s
         "",
         "If you are leaving the university or no longer use this address, you can download your data from Settings, under Your data, before then.",
         "",
-        "You are getting this email because you have a Campus Social account. You can ignore it if you no longer want one.",
+        "You are getting this email because you have a Moku account. You can ignore it if you no longer want one.",
       ].join("\n"),
     };
   }
   return {
-    subject: `Campus Social: your account will close on ${date}`,
+    subject: `Moku: your account will close on ${date}`,
     text: [
-      `Your Campus Social account is read-only because it was not re-verified. It will be closed on ${date}, which is in ${plural(r.daysLeft, "day")}, and your data is deleted about ${plural(r.purgeDays, "day")} after that.`,
+      `Your Moku account is read-only because it was not re-verified. It will be closed on ${date}, which is in ${plural(r.daysLeft, "day")}, and your data is deleted about ${plural(r.purgeDays, "day")} after that.`,
       "",
       'To keep it, open the app, go to Settings and choose "Confirm your email (needed)". We will send a code to this address.',
       "",
@@ -87,11 +87,11 @@ export interface MailTransport {
 }
 
 const PURPOSE_TEXT: Record<CodePurpose, { subject: string; line: string }> = {
-  signup: { subject: "Your Campus Social sign-up code", line: "Use this code to finish creating your account." },
-  login: { subject: "Your Campus Social sign-in code", line: "Use this code to sign in." },
-  reverify: { subject: "Your Campus Social verification code", line: "Use this code to confirm your student email address again." },
-  close: { subject: "Confirm closing your Campus Social account", line: "Use this code to confirm that you want to close your account and delete your data." },
-  appeal: { subject: "Your Campus Social appeal code", line: "Use this code to submit your appeal." },
+  signup: { subject: "Your Moku sign-up code", line: "Use this code to finish creating your account." },
+  login: { subject: "Your Moku sign-in code", line: "Use this code to sign in." },
+  reverify: { subject: "Your Moku verification code", line: "Use this code to confirm your student email address again." },
+  close: { subject: "Confirm closing your Moku account", line: "Use this code to confirm that you want to close your account and delete your data." },
+  appeal: { subject: "Your Moku appeal code", line: "Use this code to submit your appeal." },
 };
 
 export class SmtpMailer implements Mailer {
@@ -130,7 +130,7 @@ export class SmtpMailer implements Mailer {
         "",
         `It expires in ${ttlMinutes} minutes and works once.`,
         "If you did not ask for this, ignore this email. Nobody can use the code without your email account.",
-        "Campus Social will never ask you for this code by message or phone.",
+        "Moku will never ask you for this code by message or phone.",
       ].join("\n"),
     );
   }
@@ -138,9 +138,9 @@ export class SmtpMailer implements Mailer {
   async sendAlreadyRegistered(to: string) {
     await this.send(
       to,
-      "Campus Social: you already have an account",
+      "Moku: you already have an account",
       [
-        "Someone, probably you, tried to sign up with this email address, but it already has a Campus Social account.",
+        "Someone, probably you, tried to sign up with this email address, but it already has a Moku account.",
         "",
         "Open the app and choose sign in to get a code.",
         "If you did not do this, you can ignore this email.",

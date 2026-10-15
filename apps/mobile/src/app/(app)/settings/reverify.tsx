@@ -64,7 +64,7 @@ export default function Reverify() {
     <Screen>
       <Text>
         Once a year we ask you to confirm your university email so only current students stay on
-        Campus Social. We send a six-digit code to your university address.
+        Moku. We send a six-digit code to your university address.
       </Text>
       {!sent ? (
         <Button label="Send me a code" onPress={request} busy={busy} testID="request-reverify" />

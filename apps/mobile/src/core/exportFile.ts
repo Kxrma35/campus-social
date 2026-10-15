@@ -10,7 +10,7 @@ export async function shareJson(name: string, data: unknown): Promise<"shared" |
   if (!(await Sharing.isAvailableAsync())) return "unavailable";
   await Sharing.shareAsync(file.uri, {
     mimeType: "application/json",
-    dialogTitle: "Your Campus Social data",
+    dialogTitle: "Your Moku data",
     UTI: "public.json",
   });
   return "shared";

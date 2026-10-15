@@ -1,4 +1,4 @@
-# Campus Social App (working name)
+# Moku App (working name)
 
 Student-only social app with a known profile and an optional anonymous profile. V1 targets USIU-Africa.
 Specs and plans: see `BUILD_PLAN.md`, `research/`, and `legal/`.
@@ -108,7 +108,7 @@ Limits are **per process**: with several API instances each keeps its own count,
 | Variable | Default | What it does |
 |---|---|---|
 | `SMTP_URL` | unset | Outgoing email, for example `smtps://USER:PASS@smtp.example.com:465` or `smtp://USER:PASS@host:587` (STARTTLS, required in production). URL-encode the user and password. **Required in production: the API refuses to start without it.** Unset in development, codes are printed in the API log instead. |
-| `MAIL_FROM` | unset | Sender address, for example `Campus Social <no-reply@your-verified-domain>`. Required whenever `SMTP_URL` is set. |
+| `MAIL_FROM` | unset | Sender address, for example `Moku <no-reply@your-verified-domain>`. Required whenever `SMTP_URL` is set. |
 | `EMAIL_CODE_TTL_MINUTES` | `10` | How long a one-time code is valid. |
 | `MAX_CODES_PER_HOUR` | `5` | Codes one address may request per hour. |
 | `MAX_CODE_ATTEMPTS` | `5` | Wrong guesses allowed against one code before it is locked. |

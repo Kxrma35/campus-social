@@ -8,6 +8,7 @@ import { useSession } from "@/core/session/SessionProvider";
 import { usePagedList } from "@/core/usePagedList";
 import { useReactions } from "@/core/useReactions";
 import { spacing } from "@/theme/tokens";
+import { Avatar } from "@/ui/Avatar";
 import { Button } from "@/ui/Button";
 import { Loading } from "@/ui/Loading";
 import { Notice } from "@/ui/Notice";
@@ -70,55 +71,81 @@ export default function ProfileScreen() {
   const anonymous = profile.kind === "anonymous";
   const title = anonymous ? `@${profile.handle}` : (profile.displayName ?? `@${profile.handle}`);
 
+  const stat = (n: number, label: string) => (
+    <View style={{ alignItems: "center", flex: 1 }}>
+      <Text variant="heading">{n}</Text>
+      <Text variant="small" tone="muted">
+        {label}
+      </Text>
+    </View>
+  );
+
   return (
-    <Screen>
-      <View style={{ gap: spacing.sm }}>
-        <Text variant="title">{title}</Text>
-        <ProfileChip kind={profile.kind} self={profile.isSelf} />
-        {!anonymous ? (
-          <Text tone="muted">
-            {`@${profile.handle}`}
-            {profile.course ? ` · ${profile.course}` : ""}
-            {profile.studyYear ? ` · Year ${profile.studyYear}` : ""}
-          </Text>
+    <Screen padded={false}>
+      <View style={{ gap: spacing.md, padding: spacing.lg }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.lg }}>
+          <Avatar kind={profile.kind} name={profile.displayName ?? profile.handle} size="xl" />
+          <View
+            accessible
+            accessibilityLabel={`${profile.postCount} posts, ${profile.followerCount} followers, ${profile.followingCount} following`}
+            style={{ flex: 1, flexDirection: "row" }}
+          >
+            {stat(profile.postCount, "posts")}
+            {stat(profile.followerCount, "followers")}
+            {stat(profile.followingCount, "following")}
+          </View>
+        </View>
+        <View style={{ gap: spacing.xs }}>
+          <Text variant="display">{title}</Text>
+          <ProfileChip kind={profile.kind} self={profile.isSelf} />
+          {!anonymous ? (
+            <Text tone="muted">
+              {`@${profile.handle}`}
+              {profile.course ? ` · ${profile.course}` : ""}
+              {profile.studyYear ? ` · Year ${profile.studyYear}` : ""}
+            </Text>
+          ) : null}
+        </View>
+
+        {!profile.isSelf ? (
+          <View style={{ gap: spacing.sm }}>
+            <Button
+              label={profile.viewerFollows ? "Unfollow" : "Follow"}
+              variant={profile.viewerFollows ? "secondary" : "primary"}
+              busy={busy}
+              onPress={toggleFollow}
+            />
+            <Button
+              variant="link"
+              label="Report this profile"
+              onPress={() => router.push({ pathname: "/report", params: { kind: "profile", id } })}
+            />
+          </View>
         ) : null}
-        <Text accessibilityLabel={`${profile.postCount} posts, ${profile.followerCount} followers, ${profile.followingCount} following`}>
-          {profile.postCount} posts · {profile.followerCount} followers · {profile.followingCount} following
-        </Text>
+        {error ? <Notice tone="error">{error}</Notice> : null}
+        {reactions.error ? <Notice tone="error">{reactions.error}</Notice> : null}
       </View>
 
-      {!profile.isSelf ? (
-        <View style={{ gap: spacing.sm }}>
-          <Button
-            label={profile.viewerFollows ? "Unfollow" : "Follow"}
-            variant={profile.viewerFollows ? "secondary" : "primary"}
-            busy={busy}
-            onPress={toggleFollow}
+      <View style={{ paddingHorizontal: spacing.lg }}>
+        <Text variant="heading">Posts</Text>
+        {posts.items.length === 0 && posts.state === "ready" ? <Text tone="muted">No posts yet.</Text> : null}
+      </View>
+      <View>
+        {posts.items.map((p) => (
+          <PostCard
+            key={p.id}
+            post={p}
+            myProfileIds={mine}
+            onOpen={(x) => router.push({ pathname: "/post/[id]", params: { id: x.id } })}
+            onToggleReaction={reactions.toggle}
+            onReport={(x) => router.push({ pathname: "/report", params: { kind: "post", id: x.id } })}
           />
-          <Button
-            variant="link"
-            label="Report this profile"
-            onPress={() => router.push({ pathname: "/report", params: { kind: "profile", id } })}
-          />
-        </View>
-      ) : null}
-      {error ? <Notice tone="error">{error}</Notice> : null}
-      {reactions.error ? <Notice tone="error">{reactions.error}</Notice> : null}
-
-      <Text variant="heading">Posts</Text>
-      {posts.items.length === 0 && posts.state === "ready" ? <Text tone="muted">No posts yet.</Text> : null}
-      {posts.items.map((p) => (
-        <PostCard
-          key={p.id}
-          post={p}
-          myProfileIds={mine}
-          onOpen={(x) => router.push({ pathname: "/post/[id]", params: { id: x.id } })}
-          onToggleReaction={reactions.toggle}
-          onReport={(x) => router.push({ pathname: "/report", params: { kind: "post", id: x.id } })}
-        />
-      ))}
+        ))}
+      </View>
       {posts.state === "ready" && posts.items.length > 0 ? (
-        <Button variant="secondary" label="Load more" onPress={() => void posts.loadMore()} />
+        <View style={{ padding: spacing.lg }}>
+          <Button variant="secondary" label="Load more" onPress={() => void posts.loadMore()} />
+        </View>
       ) : null}
     </Screen>
   );

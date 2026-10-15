@@ -21,7 +21,7 @@ describe("SmtpMailer", () => {
 
   it.each(purposes)("sends a %s code as plain text with no links", async (purpose) => {
     const f = fake();
-    await new SmtpMailer(f.transport, "Campus Social <no-reply@example.test>").sendCode(
+    await new SmtpMailer(f.transport, "Moku <no-reply@example.test>").sendCode(
       "jane@usiu.ac.ke",
       "123456",
       purpose,
@@ -39,7 +39,7 @@ describe("SmtpMailer", () => {
   it("tells an existing account holder to sign in, without a code", async () => {
     const f = fake();
     await new SmtpMailer(f.transport, "no-reply@example.test").sendAlreadyRegistered("jane@usiu.ac.ke");
-    expect(f.sent[0]!.text).toMatch(/already has a Campus Social account/);
+    expect(f.sent[0]!.text).toMatch(/already has a Moku account/);
     expect(f.sent[0]!.text).not.toMatch(/\b\d{6}\b/);
   });
 

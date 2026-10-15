@@ -2,12 +2,12 @@ import { ApiError, NetworkError } from "@/core/api/client";
 
 const BY_CODE: Record<string, string> = {
   university_not_supported:
-    "That email address is not from a university that can use Campus Social yet.",
+    "That email address is not from a university that can use Moku yet.",
   invalid_code: "That code is not right. Check it and try again.",
   code_expired: "That code has expired. Request a new one.",
   too_many_attempts: "Too many wrong codes. Request a new code to try again.",
   too_many_requests: "Too many codes requested. Please wait a while and try again.",
-  must_be_18: "You must be 18 or older to use Campus Social.",
+  must_be_18: "You must be 18 or older to use Moku.",
   invalid_date_of_birth: "Check your date of birth and try again.",
   account_exists: "An account already exists for that email. Sign in instead.",
   account_suspended: "This account is suspended right now.",

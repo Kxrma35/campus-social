@@ -42,7 +42,7 @@ export default function EmailScreen() {
   return (
     <Screen>
       <Text variant="heading">{signup ? "Create your account" : "Sign in"}</Text>
-      <Text tone="muted">
+      <Text variant="reading" tone="muted">
         {signup
           ? "Use your university email so we know you are a current student. We send a six-digit code to confirm it is yours."
           : "We will email a six-digit code to your university address."}

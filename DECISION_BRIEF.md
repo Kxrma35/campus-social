@@ -1,4 +1,4 @@
-# Campus Social: decisions needed before a pilot
+# Moku: decisions needed before a pilot
 
 **Prepared:** 2026-10-12 · **Status:** draft for discussion · **Audience:** the controller, a Kenyan data protection lawyer, USIU-Africa student affairs and counselling
 

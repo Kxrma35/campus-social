@@ -1,8 +1,10 @@
 import { fireEvent, screen } from "@testing-library/react-native";
+import { act } from "react";
 import { Button } from "@/ui/Button";
 import { Notice } from "@/ui/Notice";
 import { PostCard, authorTitle } from "@/ui/PostCard";
 import { ProfileChip } from "@/ui/ProfileChip";
+import { SegmentedControl } from "@/ui/SegmentedControl";
 import { TextField } from "@/ui/TextField";
 import { author, post, renderApp } from "@/testing/helpers";
 
@@ -91,7 +93,7 @@ describe("PostCard", () => {
   it("shows a known author's name and handle", async () => {
     await renderApp(<PostCard post={post()} now={NOW} />);
     expect(screen.getByText("Jane Doe")).toBeTruthy();
-    expect(screen.getByText("@jane_doe_4821")).toBeTruthy();
+    expect(screen.getByText(/@jane_doe_4821/)).toBeTruthy();
     expect(screen.getByText("Student")).toBeTruthy();
   });
 
@@ -118,7 +120,7 @@ describe("PostCard", () => {
 
   it("shows exact relative time for known posts", async () => {
     await renderApp(<PostCard post={post({ createdAt: "2026-10-12T10:00:00.000Z" })} now={NOW} />);
-    expect(screen.getByText("30 minutes ago")).toBeTruthy();
+    expect(screen.getByText(/30 minutes ago/)).toBeTruthy();
   });
 
   it("marks the viewer's own posts and offers no Report for them", async () => {
@@ -127,11 +129,72 @@ describe("PostCard", () => {
     expect(screen.queryByText("Report")).toBeNull();
   });
 
-  it("offers Report for other people's posts, naming whose post it is", async () => {
+  it("keeps Report out of the action row until the person asks for more", async () => {
     const onReport = jest.fn();
     await renderApp(<PostCard post={post()} now={NOW} onReport={onReport} />);
+    expect(screen.queryByLabelText("Report this post by Jane Doe")).toBeNull();
+    expect(screen.queryByText("Report")).toBeNull();
+
+    const more = screen.getByLabelText("More about this post by Jane Doe");
+    expect(more.props.accessibilityState.expanded).toBe(false);
+    await fireEvent.press(more);
+    expect(screen.getByLabelText("More about this post by Jane Doe").props.accessibilityState.expanded).toBe(true);
+    expect(onReport).not.toHaveBeenCalled();
+  });
+
+  it("explains what a report does before it is made, then reports once", async () => {
+    const onReport = jest.fn();
+    await renderApp(<PostCard post={post()} now={NOW} onReport={onReport} />);
+    await fireEvent.press(screen.getByLabelText("More about this post by Jane Doe"));
+
+    expect(screen.getByText(/A moderator reviews every report/)).toBeTruthy();
+    expect(screen.getByText(/is not told it was\s+you/)).toBeTruthy();
     await fireEvent.press(screen.getByLabelText("Report this post by Jane Doe"));
     expect(onReport).toHaveBeenCalledTimes(1);
+    expect(screen.queryByLabelText("Report this post by Jane Doe")).toBeNull();
+  });
+
+  it("does not offer Report or More on your own post", async () => {
+    await renderApp(
+      <PostCard post={post()} now={NOW} myProfileIds={["prof-1"]} onReport={() => {}} />,
+    );
+    expect(screen.queryByLabelText(/More about this post/)).toBeNull();
+  });
+
+  it("shows the like count and says whether you have liked, not by colour alone", async () => {
+    await renderApp(<PostCard post={post({ viewerReacted: true, reactionCount: 3 })} now={NOW} />);
+    expect(screen.getByText("3")).toBeTruthy();
+    expect(screen.getByLabelText("Remove like, 3 likes")).toBeTruthy();
+    await renderApp(<PostCard post={post({ viewerReacted: false, reactionCount: 3 })} now={NOW} />);
+    expect(screen.getByLabelText("Like, 3 likes")).toBeTruthy();
+  });
+
+  it("shows a placeholder with the description, and a retry, when a photo cannot load", async () => {
+    const withPhoto = post({
+      photos: [{ id: "ph1", url: "/photos/ph1", width: 10, height: 10, altText: "A blue rectangle" }],
+    });
+    await renderApp(<PostCard post={withPhoto} now={NOW} />);
+    await act(async () => {
+      fireEvent(screen.getByTestId("post-photos"), "layout", { nativeEvent: { layout: { width: 360, height: 0 } } });
+    });
+    await act(async () => {
+      fireEvent(screen.getByLabelText(/Photo 1 of 1/), "error");
+    });
+    expect(screen.getByText("This photo could not be loaded")).toBeTruthy();
+    expect(screen.getByText("A blue rectangle")).toBeTruthy();
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Try loading photo 1 again"));
+    });
+    expect(screen.getByLabelText(/Photo 1 of 1: A blue rectangle/)).toBeTruthy();
+  });
+
+  it("keeps every action at least 44 points tall", async () => {
+    await renderApp(<PostCard post={post()} now={NOW} onOpen={() => {}} onReport={() => {}} />);
+    for (const name of [/Like, 2 likes/, /Open comments/, /More about this post/]) {
+      const el = screen.getByLabelText(name);
+      const flat = Object.assign({}, ...[el.props.style].flat(Infinity).filter(Boolean).map((s: unknown) => (typeof s === "function" ? {} : s)));
+      expect(flat.minHeight ?? 0).toBeGreaterThanOrEqual(44);
+    }
   });
 
   it("toggles a like and reflects the state in its label", async () => {
@@ -158,6 +221,9 @@ describe("PostCard", () => {
       ],
     });
     await renderApp(<PostCard post={withPhotos} now={NOW} />);
+    await act(async () => {
+      fireEvent(screen.getByTestId("post-photos"), "layout", { nativeEvent: { layout: { width: 360, height: 0 } } });
+    });
     expect(screen.getByLabelText("Photo 1 of 2: A red bicycle against a wall")).toBeTruthy();
     expect(
       screen.getByLabelText("Photo 2 of 2, attached to a post by Jane Doe. No description provided."),
@@ -169,7 +235,43 @@ describe("PostCard", () => {
       photos: [{ id: "ph1", url: "/photos/ph1", width: 10, height: 10, altText: null }],
     });
     await renderApp(<PostCard post={withPhoto} now={NOW} />);
+    await act(async () => {
+      fireEvent(screen.getByTestId("post-photos"), "layout", { nativeEvent: { layout: { width: 360, height: 0 } } });
+    });
     const img = await screen.findByLabelText(/Photo 1 of 1/);
     expect(img.props.source).toMatchObject({ uri: "https://api.test/photos/ph1" });
+  });
+});
+
+describe("SegmentedControl", () => {
+  const options = [
+    { key: "a", label: "Newest" },
+    { key: "b", label: "Top this week" },
+    { key: "c", label: "Following" },
+  ];
+
+  it("exposes tabs with a selected state and a position, in the given order", async () => {
+    await renderApp(<SegmentedControl options={options} value="b" onChange={() => {}} label="Show posts" />);
+    const tabs = screen.getAllByRole("tab");
+    expect(tabs).toHaveLength(3);
+    expect(tabs.map((t) => t.props.accessibilityLabel)).toEqual([
+      "Newest, 1 of 3",
+      "Top this week, 2 of 3",
+      "Following, 3 of 3",
+    ]);
+    expect(tabs.map((t) => t.props.accessibilityState.selected)).toEqual([false, true, false]);
+    expect(screen.getByLabelText("Show posts").props.accessibilityRole).toBe("tablist");
+  });
+
+  it("changes the selection when a segment is pressed", async () => {
+    const onChange = jest.fn();
+    await renderApp(<SegmentedControl options={options} value="a" onChange={onChange} label="Show posts" />);
+    await fireEvent.press(screen.getByLabelText("Following, 3 of 3"));
+    expect(onChange).toHaveBeenCalledWith("c");
+  });
+
+  it("shows the visible words unchanged", async () => {
+    await renderApp(<SegmentedControl options={options} value="a" onChange={() => {}} label="Show posts" />);
+    for (const o of options) expect(screen.getByText(o.label)).toBeTruthy();
   });
 });

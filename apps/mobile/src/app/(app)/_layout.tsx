@@ -1,6 +1,7 @@
 import { Stack } from "expo-router";
 import { useEffect } from "react";
 import { useSession } from "@/core/session/SessionProvider";
+import { BackButton } from "@/ui/BackButton";
 import { useTheme } from "@/ui/theme";
 
 export default function AppLayout() {
@@ -23,10 +24,14 @@ export default function AppLayout() {
   return (
     <Stack
       screenOptions={{
-        headerStyle: { backgroundColor: t.background },
+        headerStyle: { backgroundColor: t.ground },
         headerTintColor: t.text,
-        headerTitleStyle: { color: t.text },
-        contentStyle: { backgroundColor: t.background },
+        headerTitleStyle: { color: t.text, fontWeight: "700" },
+        headerTitleAlign: "left",
+        headerShadowVisible: false,
+        headerBackVisible: false,
+        headerLeft: ({ canGoBack }) => (canGoBack ? <BackButton /> : null),
+        contentStyle: { backgroundColor: t.ground },
       }}
     >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

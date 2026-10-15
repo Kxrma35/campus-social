@@ -9,7 +9,7 @@ export function Loading({ label = "Loading" }: { label?: string }) {
       accessible
       accessibilityRole="progressbar"
       accessibilityLabel={label}
-      style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24, gap: 12, backgroundColor: t.background }}
+      style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24, gap: 12, backgroundColor: t.ground }}
     >
       <ActivityIndicator color={t.primary} size="large" />
       <Text tone="muted">{label}</Text>

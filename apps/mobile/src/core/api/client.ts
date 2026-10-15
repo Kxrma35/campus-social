@@ -150,6 +150,11 @@ export function createApiClient(opts: ApiClientOptions) {
         "/me",
       ),
     myProfiles: () => request<MyProfiles>("GET", "/me/profiles"),
+    myFollowing: (cursor?: string | null, actingAs?: ProfileKind) =>
+      request<Page<Profile>>("GET", "/me/following", {
+        query: { cursor: cursor ?? undefined },
+        actingAs,
+      }),
     knownProfile: () => request<KnownProfileDetails>("GET", "/me/profile"),
     updateKnownProfile: (patch: {
       displayName?: string;

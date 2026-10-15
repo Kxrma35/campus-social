@@ -673,9 +673,12 @@ describe("feed", () => {
     });
     await renderApp(<FeedScreen />, { fetchImpl: f.impl, identity: true });
     await screen.findByText("campus post");
-    await fireEvent.press(screen.getByRole("button", { name: "Following" }));
+    expect(screen.getByLabelText("Newest, 1 of 3").props.accessibilityState.selected).toBe(true);
+    await fireEvent.press(screen.getByLabelText("Following, 3 of 3"));
     await waitFor(() => expect(f.calls.some((c) => c.path.startsWith("/feed/following"))).toBe(true));
     expect(await screen.findByText(/Follow people to see their posts/)).toBeTruthy();
+    expect(screen.getByLabelText("Following, 3 of 3").props.accessibilityState.selected).toBe(true);
+    expect(screen.getByLabelText("Newest, 1 of 3").props.accessibilityState.selected).toBe(false);
   });
 
   it("likes optimistically and puts the count back when the server refuses", async () => {

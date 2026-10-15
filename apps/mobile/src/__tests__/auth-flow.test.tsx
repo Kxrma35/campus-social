@@ -87,7 +87,7 @@ describe("email screen", () => {
     await renderApp(<EmailScreen />, { fetchImpl: f.impl, token: null });
     await fireEvent.changeText(screen.getByTestId("email-input"), "jane@gmail.com");
     await fireEvent.press(screen.getByTestId("send-code"));
-    expect(await screen.findByText(/not from a university that can use Campus Social/)).toBeTruthy();
+    expect(await screen.findByText(/not from a university that can use Moku/)).toBeTruthy();
     expect(mockPush).not.toHaveBeenCalled();
   });
 
@@ -234,7 +234,7 @@ describe("sign-up details screen (consent)", () => {
     await fireEvent.press(screen.getByTestId("accept-terms"));
     await fireEvent.press(screen.getByTestId("create-account"));
 
-    expect(await screen.findByText("You must be 18 or older to use Campus Social.")).toBeTruthy();
+    expect(await screen.findByText("You must be 18 or older to use Moku.")).toBeTruthy();
     expect(f.calls).toHaveLength(0);
   });
 

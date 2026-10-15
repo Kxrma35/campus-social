@@ -6,7 +6,9 @@ import { describeError } from "@/core/lib/errors";
 import { useIdentity } from "@/core/session/IdentityProvider";
 import { useSession } from "@/core/session/SessionProvider";
 import { spacing } from "@/theme/tokens";
+import { Avatar } from "@/ui/Avatar";
 import { Button } from "@/ui/Button";
+import { ListRow } from "@/ui/ListRow";
 import { Notice } from "@/ui/Notice";
 import { ProfileChip } from "@/ui/ProfileChip";
 import { Screen } from "@/ui/Screen";
@@ -33,23 +35,26 @@ export default function MeScreen() {
   const anon = profiles?.anonymous;
 
   return (
-    <Screen>
-      <StatusBanner />
-      <View style={{ gap: spacing.sm }}>
-        <ProfileChip kind="known" self />
+    <Screen padded={false}>
+      <View style={{ paddingHorizontal: spacing.lg, paddingTop: spacing.lg }}>
+        <StatusBanner />
+      </View>
+
+      <View style={{ paddingHorizontal: spacing.lg, gap: spacing.md }}>
         {me ? (
           <>
-            <Text variant="title">{me.displayName}</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.lg }}>
+              <Avatar kind="known" name={me.displayName} size="xl" />
+              <View style={{ flex: 1, gap: spacing.xs }}>
+                <ProfileChip kind="known" self />
+                <Text variant="display">{me.displayName}</Text>
+              </View>
+            </View>
             <Text tone="muted">
               {`@${me.handle}`}
               {me.course ? ` · ${me.course}` : ""}
               {me.studyYear ? ` · Year ${me.studyYear}` : ""}
             </Text>
-            <Button
-              variant="secondary"
-              label="See my profile and posts"
-              onPress={() => router.push({ pathname: "/profile/[id]", params: { id: me.profileId } })}
-            />
           </>
         ) : error ? (
           <Notice tone="error">{error}</Notice>
@@ -58,26 +63,34 @@ export default function MeScreen() {
         )}
       </View>
 
-      <View style={{ gap: spacing.sm }}>
-        <Text variant="heading">Anonymous profile</Text>
+      <View>
+        {me ? (
+          <ListRow
+            icon="person"
+            title="See my profile and posts"
+            onPress={() => router.push({ pathname: "/profile/[id]", params: { id: me.profileId } })}
+          />
+        ) : null}
         {anon ? (
-          <>
-            <ProfileChip kind="anonymous" self />
-            <Text>{`@${anon.handle}`}</Text>
-            <Button
-              variant="secondary"
-              label="See my anonymous posts"
-              onPress={() => router.push({ pathname: "/profile/[id]", params: { id: anon.profileId } })}
-            />
-          </>
-        ) : (
-          <Text tone="muted">You have not created one. It is optional.</Text>
-        )}
-        <Button variant="secondary" label="Manage anonymous profile" onPress={() => router.push("/settings/anonymous")} />
+          <ListRow
+            icon="lock"
+            title="See my anonymous posts"
+            detail={`@${anon.handle}`}
+            onPress={() => router.push({ pathname: "/profile/[id]", params: { id: anon.profileId } })}
+          />
+        ) : null}
+        <ListRow
+          icon="lock"
+          title="Manage anonymous profile"
+          detail={anon ? "You have an anonymous profile." : "You have not created one. It is optional."}
+          onPress={() => router.push("/settings/anonymous")}
+        />
+        <ListRow title="Settings" onPress={() => router.push("/settings")} />
       </View>
 
-      <Button label="Settings" variant="secondary" onPress={() => router.push("/settings")} />
-      <Button label="Sign out" variant="link" onPress={() => void signOut()} />
+      <View style={{ paddingHorizontal: spacing.lg, paddingBottom: spacing.xl }}>
+        <Button label="Sign out" variant="link" onPress={() => void signOut()} />
+      </View>
     </Screen>
   );
 }

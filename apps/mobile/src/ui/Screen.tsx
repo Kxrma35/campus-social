@@ -16,7 +16,7 @@ export function Screen({
   const t = useTheme();
   const body = <View style={[padded && styles.padded, styles.gap]}>{children}</View>;
   return (
-    <SafeAreaView edges={["left", "right", "bottom"]} style={[styles.fill, { backgroundColor: t.background }]}>
+    <SafeAreaView edges={["left", "right", "bottom"]} style={[styles.fill, { backgroundColor: t.ground }]}>
       {scroll ? (
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.fillGrow}>
           {body}

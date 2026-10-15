@@ -246,7 +246,7 @@ describe("reminder message", () => {
 
   it("names the date, the steps in the app and what happens next, with no links or code", () => {
     const m = reminderMessage(r);
-    expect(m.subject).toBe("Campus Social: confirm your student email by 13 November 2026");
+    expect(m.subject).toBe("Moku: confirm your student email by 13 November 2026");
     expect(m.text).toContain("in 7 days");
     expect(m.text).toContain("Confirm your email again");
     expect(m.text).toContain("30 days after that");
@@ -258,7 +258,7 @@ describe("reminder message", () => {
   it("uses the singular for one day and writes the closing notice for read-only accounts", () => {
     expect(reminderMessage({ ...r, daysLeft: 1 }).text).toContain("in 1 day.");
     const m = reminderMessage({ ...r, kind: "closing_soon", daysLeft: 3 });
-    expect(m.subject).toBe("Campus Social: your account will close on 13 November 2026");
+    expect(m.subject).toBe("Moku: your account will close on 13 November 2026");
     expect(m.text).toContain("read-only");
     expect(m.text).toContain("Confirm your email (needed)");
   });

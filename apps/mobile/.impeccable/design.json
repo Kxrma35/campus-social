@@ -1,0 +1,178 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-15T10:32:41.404936Z",
+  "title": "Design System: Moku",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Campus Blue",
+        "canonical": "#1D4ED8"
+      },
+      "anonymous": {
+        "role": "secondary",
+        "displayName": "Anonymous Lilac",
+        "canonical": "#6D28D9"
+      },
+      "background": {
+        "role": "neutral",
+        "displayName": "Page White",
+        "canonical": "#FFFFFF"
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Quiet Surface",
+        "canonical": "#F3F4F6"
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#111827"
+      },
+      "text-muted": {
+        "role": "neutral",
+        "displayName": "Muted Ink",
+        "canonical": "#4B5563"
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Border Grey",
+        "canonical": "#6B7280"
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Welcome title and profile names."
+      },
+      "reading": {
+        "displayName": "Reading",
+        "purpose": "Post text and writing prompt in Literata."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Names, buttons, tabs, counts in system sans."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "like-spring",
+        "value": "scale 0.8 to 1, spring friction 3 tension 220",
+        "purpose": "Heart tap; skipped under reduce motion."
+      },
+      {
+        "name": "press",
+        "value": "opacity 0.6 to 0.85",
+        "purpose": "Pressed state on actions and buttons."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "post-max-width",
+        "value": "640px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The main action on a screen.",
+      "html": "<button class=\"ds-btn\">Post</button>",
+      "css": ".ds-btn{background:#1D4ED8;color:#fff;font:600 14px/20px system-ui,sans-serif;min-height:44px;padding:8px 16px;border:1px solid transparent;border-radius:10px;cursor:pointer}.ds-btn:hover{opacity:.85}.ds-btn:focus-visible{outline:2px solid #1D4ED8;outline-offset:2px}"
+    },
+    {
+      "name": "Text Tabs",
+      "kind": "nav",
+      "refersTo": "",
+      "description": "Feed tabs: text with a 2px underline on the selected one.",
+      "html": "<div class=\"ds-tabs\"><span class=\"ds-tab ds-on\">Newest</span><span class=\"ds-tab\">Top this week</span><span class=\"ds-tab\">Following</span></div>",
+      "css": ".ds-tabs{display:flex;border-bottom:1px solid #6B728040;font:500 14px system-ui,sans-serif}.ds-tab{flex:1;text-align:center;padding:12px 6px;color:#4B5563;border-bottom:2px solid transparent;margin-bottom:-1px}.ds-on{color:#1D4ED8;font-weight:700;border-bottom-color:#1D4ED8}"
+    },
+    {
+      "name": "Identity Chip",
+      "kind": "chip",
+      "refersTo": "chip-anonymous",
+      "description": "Text label of who is speaking.",
+      "html": "<span class=\"ds-chip\">Anonymous</span>",
+      "css": ".ds-chip{background:#6D28D9;color:#fff;font:700 13px/18px system-ui,sans-serif;padding:2px 8px;border-radius:999px}"
+    },
+    {
+      "name": "Post",
+      "kind": "card",
+      "refersTo": "",
+      "description": "Person-led, hairline-separated post with serif body and icon actions.",
+      "html": "<article class=\"ds-post\"><header><span class=\"ds-av\">A</span><div><b>Amina Wanjiru</b><small>@amina_wanjiru \u00b7 59 minutes ago</small></div><span class=\"ds-chip2\">Student</span></header><p>First post here. Hello campus!</p><footer><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"><path d=\"M12 20.5s-7.5-4.6-9.2-9.3C1.6 7.8 3.6 4.5 7 4.5c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.4 0 5.4 3.300 4.2 6.7C19.5 15.9 12 20.5 12 20.5z\" fill=\"#1D4ED8\" stroke=\"#1D4ED8\" stroke-width=\"1.75\"/></svg> 2</footer></article>",
+      "css": ".ds-post{border-bottom:1px solid #6B728040;padding:16px 0 4px;font-family:system-ui,sans-serif;color:#111827}.ds-post header{display:flex;gap:12px;align-items:center;padding:0 16px}.ds-post header div{flex:1;display:flex;flex-direction:column}.ds-post small{color:#4B5563;font-size:13px}.ds-av{width:40px;height:40px;border-radius:50%;background:#1D4ED81A;color:#1D4ED8;font-weight:700;display:flex;align-items:center;justify-content:center}.ds-chip2{background:#1D4ED8;color:#fff;font:700 13px system-ui;padding:2px 8px;border-radius:999px}.ds-post p{font:400 17px/27px Literata,Georgia,serif;margin:12px 16px 8px}.ds-post footer{padding:4px 8px;color:#1D4ED8;font-weight:600;display:flex;gap:4px;align-items:center;min-height:44px}"
+    },
+    {
+      "name": "Writing Field",
+      "kind": "input",
+      "refersTo": "field-writing",
+      "description": "Borderless serif surface for composing posts and comments.",
+      "html": "<textarea class=\"ds-write\" placeholder=\"Start writing\"></textarea>",
+      "css": ".ds-write{width:100%;min-height:180px;border:0;border-top:1px solid #6B728040;padding:12px 0;font:400 19px/30px Literata,Georgia,serif;color:#111827;background:#fff}.ds-write:focus-visible{outline:2px solid #1D4ED8}"
+    },
+    {
+      "name": "Notice",
+      "kind": "custom",
+      "refersTo": "notice",
+      "description": "Quiet bordered message.",
+      "html": "<div class=\"ds-notice\"><b>Heads up</b><span>Plain, direct text.</span></div>",
+      "css": ".ds-notice{background:#F3F4F6;border:1px solid #6B7280;border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:4px;font-family:system-ui,sans-serif;color:#111827}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Campus Notebook Page",
+    "overview": "A feed that reads like a small publication with a face. Every post opens with a person and is set as a short published note in a serif reading face, over a quiet hairline list. Controls and labels stay in the system sans so that writing is the only thing that looks written.",
+    "keyCharacteristics": [
+      "Serif (Literata) for post text, writing surfaces, the writing prompt, screen titles and display names; system sans for every control and label.",
+      "Hairline separators, no card boxes, no shadows.",
+      "Round avatar discs: lilac with two overlapping circles for anonymous, blue-tinted with an initial for known.",
+      "Line icons at one stroke weight (1.75).",
+      "Light and dark schemes with a shared role vocabulary."
+    ],
+    "rules": [
+      {
+        "name": "The One Blue Rule",
+        "body": "Blue means you can act on this or this is selected. It is never used as decoration.",
+        "section": "colors"
+      },
+      {
+        "name": "The Lilac Means Anonymous Rule",
+        "body": "Lilac appears only where an anonymous profile is speaking.",
+        "section": "colors"
+      },
+      {
+        "name": "The Words Carry Identity Rule",
+        "body": "Identity is always also stated as a text chip; colour is never the only signal.",
+        "section": "colors"
+      },
+      {
+        "name": "The Serif Is For Words People Wrote Rule",
+        "body": "Literata is for what a student writes or is prompted to write, plus screen titles and names; controls never use it.",
+        "section": "typography"
+      },
+      {
+        "name": "The Hairline Instead Of A Box Rule",
+        "body": "Separate content with a hairline, not a bordered card.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do open every post with a person: avatar, name, handle, time, identity chip.",
+      "Do set anything a student writes in Literata and every control in the system sans.",
+      "Do separate with hairlines and keep surfaces flat.",
+      "Do keep 44px targets and state identity as words.",
+      "Do keep icons to the one line style at 1.75 stroke."
+    ],
+    "donts": [
+      "Don't wrap posts in outlined cards or lines of identical outlined buttons.",
+      "Don't use lilac for anything but anonymous identity.",
+      "Don't add shadows, gradients or decorative colour.",
+      "Don't use an icon alone to carry a state without an accessible label."
+    ]
+  }
+}

@@ -71,7 +71,7 @@ export default function CodeScreen() {
 
   return (
     <Screen>
-      <Text tone="muted">
+      <Text variant="reading" tone="muted">
         We sent a six-digit code to {email}. It works for 10 minutes. Check your spam folder if it
         does not arrive.
       </Text>

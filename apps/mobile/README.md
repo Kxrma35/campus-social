@@ -1,4 +1,4 @@
-# Campus Social: mobile app
+# Moku: mobile app
 
 React Native + Expo (SDK 57), TypeScript, Expo Router. Talks to `apps/api`.
 
@@ -22,7 +22,7 @@ app says the documents are not available yet rather than showing drafts as final
 
 ```bash
 npm run typecheck
-npm test                 # 172 tests: core, components, auth flow, main screens
+npm test                 # 180 tests: core, components, auth flow, main screens
 npm run bundle:check     # headless Hermes bundle for Android
 npm run doctor
 ```
@@ -106,5 +106,5 @@ have not been exercised on hardware. Do that before any pilot.
 
 ## Licences and assets
 
-No third-party artwork, fonts or icons are included. Dependencies keep their own licences
+No third-party artwork, fonts or icons are included; the app uses the system fonts. Dependencies keep their own licences
 (see `package.json`); check before adding any asset and record its source here.

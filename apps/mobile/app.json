@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Campus Social",
+    "name": "Moku",
     "slug": "campus-social",
     "version": "0.1.0",
     "orientation": "portrait",
@@ -49,11 +49,12 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Campus Social uses the photos you choose to attach to your posts. It cannot see the rest of your library.",
+          "photosPermission": "Moku uses the photos you choose to attach to your posts. It cannot see the rest of your library.",
           "cameraPermission": false,
           "microphonePermission": false
         }
-      ]
+      ],
+      "expo-font"
     ],
     "extra": {
       "apiBaseUrl": "http://10.0.2.2:3000"

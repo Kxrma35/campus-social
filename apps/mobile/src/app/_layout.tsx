@@ -9,7 +9,7 @@ import { ThemeProvider, useTheme } from "@/ui/theme";
 function Gate() {
   const { status } = useSession();
   const t = useTheme();
-  if (status === "loading") return <Loading label="Starting Campus Social" />;
+  if (status === "loading") return <Loading label="Starting Moku" />;
   const signedIn = status === "signedIn";
 
   return (
@@ -30,6 +30,7 @@ function Gate() {
 }
 
 export default function RootLayout() {
+
   return (
     <SafeAreaProvider>
       <ThemeProvider>

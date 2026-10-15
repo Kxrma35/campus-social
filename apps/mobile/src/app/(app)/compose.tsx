@@ -10,6 +10,7 @@ import type { PickedPhoto } from "@/core/photos";
 import { useIdentity } from "@/core/session/IdentityProvider";
 import { useSession } from "@/core/session/SessionProvider";
 import { radius, spacing } from "@/theme/tokens";
+import { Avatar } from "@/ui/Avatar";
 import { Button } from "@/ui/Button";
 import { Notice } from "@/ui/Notice";
 import { ProfileChip } from "@/ui/ProfileChip";
@@ -109,19 +110,23 @@ export default function ComposeScreen() {
             : "You are posting as yourself, with your name"
         }
         style={{
-          borderWidth: 2,
-          borderColor: accent,
-          borderRadius: radius.lg,
-          padding: spacing.md,
-          gap: spacing.sm,
+          borderBottomWidth: 3,
+          borderBottomColor: accent,
+          paddingBottom: spacing.md,
+          gap: spacing.md,
         }}
       >
-        <ProfileChip kind={as} self prefix="Posting as" />
-        <Text>
-          {anonymous
-            ? `Other students will see only ${handle ? "@" + handle : "your generated handle"}, not your name.`
-            : "Other students at your campus will see your name."}
-        </Text>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
+          <Avatar kind={as} name={anonymous ? handle : profiles?.known?.handle} size="lg" />
+          <View style={{ flex: 1, gap: spacing.xs }}>
+            <ProfileChip kind={as} self prefix="Posting as" />
+            <Text variant="small" tone="muted">
+              {anonymous
+                ? `Other students will see only ${handle ? "@" + handle : "your generated handle"}, not your name.`
+                : "Other students at your campus will see your name."}
+            </Text>
+          </View>
+        </View>
         {canUseAnonymous ? (
           <Button
             variant="secondary"
@@ -139,6 +144,8 @@ export default function ComposeScreen() {
 
       <TextField
         label="What do you want to say?"
+        writing
+        placeholder="Start writing"
         value={body}
         onChangeText={setBody}
         multiline
@@ -154,7 +161,7 @@ export default function ComposeScreen() {
               <Image
                 source={{ uri: p.localUri }}
                 accessibilityLabel={`Selected photo ${i + 1} of ${photos.length}`}
-                style={{ width: 96, height: 96, borderRadius: radius.md }}
+                style={{ width: 120, height: 120, borderRadius: radius.md }}
               />
               <Button
                 variant="link"

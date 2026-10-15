@@ -143,60 +143,68 @@ export default function PostScreen() {
   const isMine = mine.includes(post.author.profileId);
 
   return (
-    <Screen>
-      <PostCard
-        detail
-        post={post}
-        myProfileIds={mine}
-        onOpenAuthor={(p) =>
-          router.push({ pathname: "/profile/[id]", params: { id: p.author.profileId } })
-        }
-        onToggleReaction={reactions.toggle}
-        onReport={(p) => router.push({ pathname: "/report", params: { kind: "post", id: p.id } })}
-      />
-      {isMine ? <PostEditor body={post.body} onSave={saveBody} /> : null}
-      {editSupport ? <SupportPanel support={editSupport} onDone={() => setEditSupport(null)} /> : null}
-      {isMine ? <PhotoDescriptions photos={post.photos} onSave={saveDescription} /> : null}
-      {isMine ? <Button variant="danger" label="Delete this post" onPress={deletePost} /> : null}
-      {reactions.error ? <Notice tone="error">{reactions.error}</Notice> : null}
-
-      <Text variant="heading">Comments</Text>
-      {comments.items.length === 0 && comments.state === "ready" ? (
-        <Text tone="muted">No comments yet.</Text>
-      ) : null}
-      {comments.items.map((c) => (
-        <CommentItem
-          key={c.id}
-          comment={c}
-          mine={mine.includes(c.author.profileId)}
-          onToggleReaction={toggleCommentLike}
-          onDelete={deleteComment}
-          onReport={(x) => router.push({ pathname: "/report", params: { kind: "comment", id: x.id } })}
+    <Screen padded={false}>
+      <View style={{ margin: 16 }}>
+        <PostCard
+          detail
+          post={post}
+          myProfileIds={mine}
+          onOpenAuthor={(p) =>
+            router.push({ pathname: "/profile/[id]", params: { id: p.author.profileId } })
+          }
+          onToggleReaction={reactions.toggle}
+          onReport={(p) => router.push({ pathname: "/report", params: { kind: "post", id: p.id } })}
         />
-      ))}
-      {comments.state === "error" ? (
-        <Notice tone="error" title="Could not load comments">
-          {describeError(comments.error)}
-        </Notice>
-      ) : null}
+      </View>
+      <View style={{ paddingHorizontal: spacing.lg, gap: spacing.lg, paddingTop: spacing.lg }}>
+        {isMine ? <PostEditor body={post.body} onSave={saveBody} /> : null}
+        {editSupport ? <SupportPanel support={editSupport} onDone={() => setEditSupport(null)} /> : null}
+        {isMine ? <PhotoDescriptions photos={post.photos} onSave={saveDescription} /> : null}
+        {isMine ? <Button variant="danger" label="Delete this post" onPress={deletePost} /> : null}
+        {reactions.error ? <Notice tone="error">{reactions.error}</Notice> : null}
 
-      {support ? (
-        <SupportPanel support={support} onDone={() => setSupport(null)} />
-      ) : (
-        <View style={{ gap: spacing.sm }}>
-          <ProfileChip kind={acting} self prefix="Commenting as" />
-          <TextField
-            label="Add a comment"
-            value={draft}
-            onChangeText={setDraft}
-            multiline
-            maxLength={MAX_COMMENT_LENGTH}
-            error={commentError}
-            testID="comment-input"
+        <Text variant="heading">Comments</Text>
+        {comments.items.length === 0 && comments.state === "ready" ? (
+          <Text tone="muted">No comments yet.</Text>
+        ) : null}
+      </View>
+      <View style={{ paddingHorizontal: spacing.lg }}>
+        {comments.items.map((c) => (
+          <CommentItem
+            key={c.id}
+            comment={c}
+            mine={mine.includes(c.author.profileId)}
+            onToggleReaction={toggleCommentLike}
+            onDelete={deleteComment}
+            onReport={(x) => router.push({ pathname: "/report", params: { kind: "comment", id: x.id } })}
           />
-          <Button label="Post comment" onPress={sendComment} busy={sending} testID="send-comment" />
-        </View>
-      )}
+        ))}
+      </View>
+      <View style={{ paddingHorizontal: spacing.lg, gap: spacing.lg, paddingBottom: spacing.xl }}>
+        {comments.state === "error" ? (
+          <Notice tone="error" title="Could not load comments">
+            {describeError(comments.error)}
+          </Notice>
+        ) : null}
+
+        {support ? (
+          <SupportPanel support={support} onDone={() => setSupport(null)} />
+        ) : (
+          <View style={{ gap: spacing.sm }}>
+            <ProfileChip kind={acting} self prefix="Commenting as" />
+            <TextField
+              label="Add a comment"
+              value={draft}
+              onChangeText={setDraft}
+              multiline
+              maxLength={MAX_COMMENT_LENGTH}
+              error={commentError}
+              testID="comment-input"
+            />
+            <Button label="Post comment" onPress={sendComment} busy={sending} testID="send-comment" />
+          </View>
+        )}
+      </View>
     </Screen>
   );
 }

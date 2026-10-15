@@ -121,7 +121,7 @@ for (const doc of DOCS) {
     : "";
 
   const html = page({
-    title: `${doc.title} | Campus Social`,
+    title: `${doc.title} | Moku`,
     body: `<nav aria-label="Policies"><a href="../">All policies</a></nav>\n${rendered.html}`,
     draftNote: note,
     footer: `Source: ${escapeHtml(doc.file)}${version ? `, draft v${escapeHtml(version)}` : ""}.`,
@@ -141,13 +141,13 @@ const anyDraft = built.some((d) => d.draft);
 writeFileSync(
   join(outDir, "index.html"),
   page({
-    title: "Policies | Campus Social",
+    title: "Policies | Moku",
     body:
-      `<h1>Campus Social policies</h1>\n<nav aria-label="Policies"><ul>\n` +
+      `<h1>Moku policies</h1>\n<nav aria-label="Policies"><ul>\n` +
       built.map((d) => `<li><a href="${d.slug}/">${escapeHtml(d.title)}</a>${d.draft ? " (draft)" : ""}</li>`).join("\n") +
       `\n</ul></nav>`,
     draftNote: anyDraft ? "These documents are drafts that have not been reviewed by a lawyer. Do not rely on them." : "",
-    footer: "Campus Social",
+    footer: "Moku",
   }),
 );
 
