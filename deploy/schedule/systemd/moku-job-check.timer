@@ -1,0 +1,9 @@
+[Unit]
+Description=Check the Moku scheduled jobs every hour
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+
+[Install]
+WantedBy=timers.target

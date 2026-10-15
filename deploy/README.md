@@ -48,7 +48,7 @@ Check the API with `curl http://127.0.0.1:3000/health`.
 - **Tell the API about the proxy.** Set `TRUST_PROXY_HOPS=1` in `.env.api` when exactly one reverse proxy or load balancer sits in front, so rate limits see each student's address and not the proxy's. Leave it at `0` if the API is reached directly. Request logs include the client address, so set a log retention period and record it in the privacy policy.
 - **TLS and a public address are not included.** The API speaks plain HTTP on `127.0.0.1:3000`. Put a reverse proxy or the platform's load balancer in front, terminate TLS there, and forward only `/` to the API. **Never expose the admin port (3100).**
 - **Photos default to a local volume**, which means exactly **one** API instance, and that volume must be backed up with the database. Set `PHOTO_STORAGE=s3` (below) to remove that limit.
-- **Backups are scripts, not a schedule.** `backup.sh` and `restore.sh` exist and are tested, but **nothing runs them**. Put `backup.sh` on a schedule on a host that does not hold the link keys, copy the output off that host, and keep the link keys separately (`../ops/KEY_CUSTODY_AND_RESTORE.md`). Then run the restore drill.
+- **Backups need a schedule.** `backup.sh` and `restore.sh` exist and are tested, and `schedule/` has timers and alerting for them (see "Running the jobs on a schedule"), but **nothing is installed for you**: you choose the retention, the encryption recipient and where alerts go. Put `backup.sh` on a schedule on a host that does not hold the link keys, copy the output off that host, and keep the link keys separately (`../ops/KEY_CUSTODY_AND_RESTORE.md`). Then run the restore drill.
 - **A backup keeps deleted data.** A student who closes their account, or deletes a post, is still in every backup taken before that. Decide how long backups are kept (a short, fixed period such as 35 days works), delete older ones, and say so in the privacy policy. The policy's "deleted within 30 days" is only true of the live service unless backups age out too.
 - **The photo bucket is not covered by `backup.sh`'s database dump.** Either archive it with `--photos` (local storage only) or rely on the storage provider's replication, and apply the same retention rule.
 - **Secrets belong in the platform's secret store**, not in files on a disk. The env files are the interface, not the recommendation.
@@ -65,6 +65,23 @@ node check-production.mjs --api .env.api --admin .env.admin --closed-test
 ```
 
 It refuses placeholders, a non-production `NODE_ENV`, development settings, the wrong database role for a service, short or reused keys, example email settings, a missing proxy count, draft terms and an empty helpline list. It never prints a value. `--closed-test` relaxes only the two legal and helpline checks. CI runs its tests (`node --test check-production.test.mjs`).
+
+## Running the jobs on a schedule
+
+Nothing runs the maintenance sweep or the backups for you. `schedule/` holds a small, host-neutral way to do it, with failure alerts and no third party:
+
+| File | Purpose |
+|---|---|
+| `schedule/run-job.sh` | Runs one job with a lock, a timeout and a bounded log, records when it last succeeded, and alerts on failure. |
+| `schedule/check-jobs.sh` | Alerts when a job has not succeeded within a number of hours, or never has, so a job that silently stopped is noticed. |
+| `schedule/run-backup.sh` | One backup followed by pruning. It has **no defaults** for how long backups are kept or whether they are encrypted: those are your decisions. |
+| `schedule/systemd/` | Timers and services for a nightly sweep (03:30), a nightly backup (02:30) and an hourly check. |
+| `schedule/crontab.example` | The same schedule for a host without systemd. |
+| `schedule/jobs.env.example` | The settings file, kept outside the API and admin environments. |
+
+Alerts go only to an endpoint you set (`ALERT_WEBHOOK_URL`) or a command you set (`ALERT_COMMAND`); with neither they go to the scheduler's log. A message holds the job name, the host, the time and the exit code, never log content. `bash schedule/test-jobs.sh` tests the scripts and runs in CI.
+
+This does not alert on an API that is down or slow. Point an external uptime check at `/health`; that is a separate, small service you choose.
 
 ## Object storage for photos
 

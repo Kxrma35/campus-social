@@ -1,0 +1,8 @@
+[Unit]
+Description=Check that the Moku scheduled jobs are still succeeding
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/moku/jobs.env
+# A job is stale when it has not succeeded within 30 hours (nightly, plus slack).
+ExecStart=/opt/moku/deploy/schedule/check-jobs.sh lifecycle:30 backup:30

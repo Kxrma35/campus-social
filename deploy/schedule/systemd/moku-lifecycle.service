@@ -1,0 +1,11 @@
+[Unit]
+Description=Moku maintenance sweep (retention, reminders, purges)
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/moku/deploy
+EnvironmentFile=/etc/moku/jobs.env
+ExecStart=/opt/moku/deploy/schedule/run-job.sh lifecycle -- \
+  docker compose --env-file .env.owner run --rm lifecycle

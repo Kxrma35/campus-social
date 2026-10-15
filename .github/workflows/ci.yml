@@ -125,12 +125,18 @@ jobs:
           bash -n deploy/restore.sh
           bash -n deploy/lib-pg.sh
           bash -n ops/restore-drill.sh
+          bash -n deploy/schedule/lib-jobs.sh
+          bash -n deploy/schedule/run-job.sh
+          bash -n deploy/schedule/check-jobs.sh
+          bash -n deploy/schedule/run-backup.sh
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - name: Production configuration check and its tests
         working-directory: deploy
         run: node --test check-production.test.mjs
+      - name: Scheduled job scripts
+        run: bash deploy/schedule/test-jobs.sh
       - name: Compose file is valid
         working-directory: deploy
         run: |

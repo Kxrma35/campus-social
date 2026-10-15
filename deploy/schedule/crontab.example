@@ -1,0 +1,5 @@
+# The same schedule for a host without systemd. Install with `crontab -e` as the user that
+# runs the containers. Load the settings first with a wrapper or `set -a; . /etc/moku/jobs.env`.
+30 2 * * * . /etc/moku/jobs.env && /opt/moku/deploy/schedule/run-job.sh backup -- /opt/moku/deploy/schedule/run-backup.sh
+30 3 * * * . /etc/moku/jobs.env && cd /opt/moku/deploy && /opt/moku/deploy/schedule/run-job.sh lifecycle -- docker compose --env-file .env.owner run --rm lifecycle
+0 * * * *  . /etc/moku/jobs.env && /opt/moku/deploy/schedule/check-jobs.sh lifecycle:30 backup:30

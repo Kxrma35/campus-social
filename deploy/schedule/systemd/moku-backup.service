@@ -1,0 +1,13 @@
+[Unit]
+Description=Moku database backup, then prune old copies
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/moku/deploy
+# Holds OWNER_DATABASE_URL, BACKUP_DIR, BACKUP_KEEP_DAYS, BACKUP_ENCRYPT_TO and the alert target.
+# Keep it readable by root only, and on a host that does not hold the link keys.
+EnvironmentFile=/etc/moku/jobs.env
+ExecStart=/opt/moku/deploy/schedule/run-job.sh backup -- \
+  /opt/moku/deploy/schedule/run-backup.sh

@@ -1,0 +1,10 @@
+[Unit]
+Description=Back up the Moku database every night
+
+[Timer]
+OnCalendar=*-*-* 02:30:00
+RandomizedDelaySec=300
+Persistent=true
+
+[Install]
+WantedBy=timers.target
