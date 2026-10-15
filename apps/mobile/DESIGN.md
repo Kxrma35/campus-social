@@ -98,7 +98,7 @@ Photos: until real ones exist, the panel shows an original generated greyscale t
 
 ## Files this will touch
 
-Theme module and components under `src/theme` and `src/ui`; auth screens under `src/app/(auth)`; the re-verification screen; `src/core/config` for `APP_NAME`; `docs/licences.md` (new, consolidating the font, placeholder art and icon records that currently live in `legal/COOKIES_AND_TRACKERS.md`); `.gitignore` (the Impeccable block, only if missing when I get there); `PRODUCT.md` Brand Commitments (on approval of decision 2). The reference image stays at the repo root as `signin-reference.png`; I would move it to `docs/design/reference/` only if you want that.
+Theme module and components under `src/theme` and `src/ui`; auth screens under `src/app/(auth)`; the re-verification screen; `src/core/config` for `APP_NAME`; `docs/licences.md` (new, consolidating the font, placeholder art and icon records that currently live in `legal/COOKIES_AND_TRACKERS.md`); `.gitignore` (the Impeccable block, only if missing when I get there); `PRODUCT.md` Brand Commitments (on approval of decision 2). The reference images live in `docs/design/reference/` (`signin-reference.png`, `feed-reference.png`).
 
 ## Blocked by open decisions in BUILD_PLAN.md
 
