@@ -56,6 +56,16 @@ Check the API with `curl http://127.0.0.1:3000/health`.
 - **There is no automatic restart or schedule.** `restart` is `"no"` by design; set it per your platform if you want it.
 - **Migrations only move forward.** There is no rollback; restore from backup instead.
 
+## Checking the configuration before you start
+
+```bash
+node check-production.mjs --api .env.api --admin .env.admin
+# before the legal documents are reviewed, for a small invited test only:
+node check-production.mjs --api .env.api --admin .env.admin --closed-test
+```
+
+It refuses placeholders, a non-production `NODE_ENV`, development settings, the wrong database role for a service, short or reused keys, example email settings, a missing proxy count, draft terms and an empty helpline list. It never prints a value. `--closed-test` relaxes only the two legal and helpline checks. CI runs its tests (`node --test check-production.test.mjs`).
+
 ## Object storage for photos
 
 Set these in `.env.api`, **and the same storage settings in `.env.admin`** (the admin service reads photos for moderators). The maintenance job uses `.env.api`.
