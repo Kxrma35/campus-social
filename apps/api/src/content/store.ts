@@ -29,7 +29,7 @@ export interface ContentStore {
     authorProfileId: string;
     body: string;
     now: Date;
-  }): Promise<boolean>;
+  }): Promise<"updated" | "locked" | "missing">;
   softDeletePost(input: { postId: string; authorProfileId: string; now: Date }): Promise<boolean>;
   countPostsBy(profileId: string): Promise<number>;
   countRecent(

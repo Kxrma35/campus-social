@@ -202,13 +202,20 @@ export class PgContentStore implements ContentStore {
     authorProfileId: string;
     body: string;
     now: Date;
-  }): Promise<boolean> {
+  }): Promise<"updated" | "locked" | "missing"> {
     const r = await this.pool.query(
       `update posts set body = $3, edited_at = $4
-        where id = $1 and author_profile_id = $2 and deleted_at is null and hidden_at is null`,
+        where id = $1 and author_profile_id = $2 and deleted_at is null and hidden_at is null
+          and not moderation.post_has_open_report(id)`,
       [input.postId, input.authorProfileId, input.body, input.now],
     );
-    return r.rowCount === 1;
+    if (r.rowCount === 1) return "updated";
+    const own = await this.pool.query(
+      `select 1 from posts
+        where id = $1 and author_profile_id = $2 and deleted_at is null and hidden_at is null`,
+      [input.postId, input.authorProfileId],
+    );
+    return own.rowCount === 1 ? "locked" : "missing";
   }
 
   async softDeletePost(input: {

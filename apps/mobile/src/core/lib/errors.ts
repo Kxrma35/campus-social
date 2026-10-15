@@ -19,6 +19,8 @@ const BY_CODE: Record<string, string> = {
   anonymous_unavailable: "Your anonymous profile is temporarily unavailable. Please try again later.",
   no_anonymous_profile: "You have not created an anonymous profile yet.",
   empty_post: "Write something or add a photo.",
+  invalid_body: "Posts must be between 1 and 5000 characters.",
+  under_review: "This post can't be edited right now. Please try again later.",
   body_too_long: "That post is too long.",
   too_many_photos: "A post can have at most 4 photos.",
   photo_invalid: "One of the photos could not be used. Try picking it again.",

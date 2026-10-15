@@ -15,6 +15,7 @@ import { Loading } from "@/ui/Loading";
 import { Notice } from "@/ui/Notice";
 import { PhotoDescriptions } from "@/ui/PhotoDescriptions";
 import { PostCard } from "@/ui/PostCard";
+import { PostEditor } from "@/ui/PostEditor";
 import { ProfileChip } from "@/ui/ProfileChip";
 import { Screen } from "@/ui/Screen";
 import { SupportPanel } from "@/ui/SupportPanel";
@@ -32,6 +33,7 @@ export default function PostScreen() {
   const [sending, setSending] = useState(false);
   const [commentError, setCommentError] = useState<string | null>(null);
   const [support, setSupport] = useState<Comment["support"] | null>(null);
+  const [editSupport, setEditSupport] = useState<Post["support"] | null>(null);
 
   const mine = [profileIdFor("known"), profileIdFor("anonymous")];
 
@@ -100,6 +102,14 @@ export default function PostScreen() {
     }
   }
 
+  async function saveBody(text: string) {
+    if (!post) return;
+    const updated = await api.editPost(post.id, text, post.author.kind);
+    const { support: crisis, ...view } = updated;
+    setPost(view);
+    if (crisis) setEditSupport(crisis);
+  }
+
   async function saveDescription(photoId: string, altText: string | null) {
     if (!post) return;
     const saved = await api.setPhotoAltText(photoId, altText, post.author.kind);
@@ -144,6 +154,8 @@ export default function PostScreen() {
         onToggleReaction={reactions.toggle}
         onReport={(p) => router.push({ pathname: "/report", params: { kind: "post", id: p.id } })}
       />
+      {isMine ? <PostEditor body={post.body} onSave={saveBody} /> : null}
+      {editSupport ? <SupportPanel support={editSupport} onDone={() => setEditSupport(null)} /> : null}
       {isMine ? <PhotoDescriptions photos={post.photos} onSave={saveDescription} /> : null}
       {isMine ? <Button variant="danger" label="Delete this post" onPress={deletePost} /> : null}
       {reactions.error ? <Notice tone="error">{reactions.error}</Notice> : null}

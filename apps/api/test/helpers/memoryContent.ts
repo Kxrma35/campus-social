@@ -194,12 +194,15 @@ export class MemoryContentStore implements ContentStore {
     return p && this.visiblePost(p, viewer) ? this.postRow(p, viewer) : null;
   }
 
+  postsUnderReview = new Set<string>();
+
   async updatePostBody(input: { postId: string; authorProfileId: string; body: string; now: Date }) {
     const p = this.posts.find((x) => x.id === input.postId);
-    if (!p || p.authorId !== input.authorProfileId || p.deletedAt || p.hidden) return false;
+    if (!p || p.authorId !== input.authorProfileId || p.deletedAt || p.hidden) return "missing" as const;
+    if (this.postsUnderReview.has(p.id)) return "locked" as const;
     p.body = input.body;
     p.editedAt = input.now;
-    return true;
+    return "updated" as const;
   }
 
   async softDeletePost(input: { postId: string; authorProfileId: string; now: Date }) {

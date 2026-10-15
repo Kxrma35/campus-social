@@ -336,6 +336,123 @@ describe("editing photo descriptions", () => {
   });
 });
 
+describe("editing a post", () => {
+  const mine = (body: string, over: Record<string, unknown> = {}) =>
+    post({ id: "post-1", body, author: author({ profileId: "prof-me" }), photos: [], ...over });
+  const routes = (p: ReturnType<typeof post>, extra: Record<string, { status?: number; body?: unknown }> = {}) => ({
+    "GET /me/profiles": { body: MY_PROFILES_WITH_ANON },
+    "GET /posts/post-1": { body: p },
+    "GET /posts/post-1/comments": { body: { items: [], nextCursor: null } },
+    ...extra,
+  });
+  const open = async (r: ReturnType<typeof routes>) => {
+    const f = mockFetch(r);
+    await renderApp(<PostScreen />, { fetchImpl: f.impl, identity: true });
+    await fireEvent.press(await screen.findByTestId("open-edit-post"));
+    return f;
+  };
+  const save = async () => {
+    await act(async () => {
+      await fireEvent.press(screen.getByTestId("save-post"));
+    });
+  };
+
+  beforeEach(() => {
+    mockParams = { id: "post-1" };
+  });
+
+  it("starts from the current text and saves the trimmed change", async () => {
+    const f = await open(
+      routes(mine("first draft"), { "PATCH /posts/post-1": { body: mine("second draft", { edited: true }) } }),
+    );
+    expect(screen.getByTestId("edit-post-body").props.value).toBe("first draft");
+    await fireEvent.changeText(screen.getByTestId("edit-post-body"), "  second draft  ");
+    await save();
+    await waitFor(() => expect(f.calls.find((c) => c.method === "PATCH")).toBeTruthy());
+    const sent = f.calls.find((c) => c.method === "PATCH")!;
+    expect(sent.path).toBe("/posts/post-1");
+    expect(sent.body).toEqual({ body: "second draft" });
+    expect(sent.headers["x-acting-as"]).toBeUndefined();
+    expect(await screen.findByText(/second draft/)).toBeTruthy();
+    expect(screen.queryByTestId("edit-post-body")).toBeNull();
+  });
+
+  it("edits an anonymous post as the anonymous profile", async () => {
+    const anon = post({
+      id: "post-1",
+      body: "anon v1",
+      author: author({ profileId: "prof-anon", kind: "anonymous", handle: "quiet_fox_1234", displayName: null }),
+    });
+    const f = await open(routes(anon, { "PATCH /posts/post-1": { body: { ...anon, body: "anon v2", edited: true } } }));
+    await fireEvent.changeText(screen.getByTestId("edit-post-body"), "anon v2");
+    await save();
+    await waitFor(() => expect(f.calls.find((c) => c.method === "PATCH")).toBeTruthy());
+    expect(f.calls.find((c) => c.method === "PATCH")!.headers["x-acting-as"]).toBe("anonymous");
+  });
+
+  it("sends nothing when the text did not change", async () => {
+    const f = await open(routes(mine("same text")));
+    await save();
+    expect(f.calls.some((c) => c.method === "PATCH")).toBe(false);
+    await waitFor(() => expect(screen.queryByTestId("edit-post-body")).toBeNull());
+  });
+
+  it("will not save an empty or over long post", async () => {
+    const f = await open(routes(mine("keep me")));
+    await fireEvent.changeText(screen.getByTestId("edit-post-body"), "   ");
+    await save();
+    expect(await screen.findByText(/delete the post instead/)).toBeTruthy();
+    await fireEvent(screen.getByTestId("edit-post-body"), "changeText", "x".repeat(5001));
+    await save();
+    expect(await screen.findByText(/at most 5000 characters/)).toBeTruthy();
+    expect(f.calls.some((c) => c.method === "PATCH")).toBe(false);
+  });
+
+  it("keeps the post and says why when the server refuses", async () => {
+    await open(
+      routes(mine("keep me"), { "PATCH /posts/post-1": { status: 403, body: { error: "read_only", message: "x" } } }),
+    );
+    await fireEvent.changeText(screen.getByTestId("edit-post-body"), "changed");
+    await save();
+    expect(await screen.findByText(/read-only until you re-verify/)).toBeTruthy();
+    await fireEvent.press(screen.getByText("Cancel"));
+    expect(await screen.findByText(/keep me/)).toBeTruthy();
+  });
+
+  it("says plainly that the post cannot be edited right now, and keeps the text", async () => {
+    await open(
+      routes(mine("keep me"), {
+        "PATCH /posts/post-1": { status: 409, body: { error: "under_review", message: "x" } },
+      }),
+    );
+    await fireEvent.changeText(screen.getByTestId("edit-post-body"), "changed");
+    await save();
+    expect(await screen.findByText("This post can't be edited right now. Please try again later.")).toBeTruthy();
+    expect(screen.getByTestId("edit-post-body").props.value).toBe("changed");
+  });
+
+  it("shows support information when an edit is flagged as a possible crisis", async () => {
+    await open(
+      routes(mine("fine"), {
+        "PATCH /posts/post-1": {
+          body: mine("not fine", { edited: true, support: { message: "You do not have to face this alone.", resources: [] } }),
+        },
+      }),
+    );
+    await fireEvent.changeText(screen.getByTestId("edit-post-body"), "not fine");
+    await save();
+    expect(await screen.findByText("You do not have to face this alone.")).toBeTruthy();
+    expect(screen.getByText(/local emergency services/)).toBeTruthy();
+  });
+
+  it("is not offered on someone else's post", async () => {
+    const f = mockFetch(routes(post({ id: "post-1", author: author({ profileId: "someone-else" }) })));
+    await renderApp(<PostScreen />, { fetchImpl: f.impl, identity: true });
+    await screen.findByText("Comments");
+    expect(screen.queryByTestId("open-edit-post")).toBeNull();
+  });
+});
+
 describe("anonymous profile settings", () => {
   it("will not create the profile until the notice has been acknowledged", async () => {
     const f = mockFetch({

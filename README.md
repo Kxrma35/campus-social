@@ -179,7 +179,7 @@ See `apps/mobile/README.md` for the build profiles and the release check.
 
 ## Database
 
-Migrations are plain SQL for PostgreSQL 15+, applied in order (`0001` to `0011`). All eleven have been applied to PostgreSQL 16 in a throwaway container and the full test suite run against the result.
+Migrations are plain SQL for PostgreSQL 15+, applied in order (`0001` to `0012`). All twelve have been applied to PostgreSQL 16 in a throwaway container and the full test suite run against the result.
 
 ```bash
 for f in db/migrations/*.sql; do
@@ -320,6 +320,7 @@ Design rules worth knowing:
 - **Bans are reversible.** A ban hides content with `hidden_reason = 'account_banned'` instead of deleting it, so an upheld appeal can restore it. Content a student deleted themselves stays deleted.
 - **Urgent means 1 hour, everything else 24.** `threat`, `self_harm` and `intimate_image` reports are urgent. These are the spec's proposed targets, surfaced as `dueAt` and `overdue`; nothing pages anyone.
 - **Crisis posts:** posts and comments matching a short self-harm phrase list are flagged to the urgent queue straight away, and the author's response includes support information. The resource list comes only from `SUPPORT_RESOURCES_JSON`; no helpline number is hard-coded.
+- **Editing a post is checked like a new one.** The self-harm phrase check runs again on the new text, so a post cannot be made benign first and changed afterwards without the flag and the support message. **A post cannot be edited while a report on it is open** (any report, including an automatic flag), so a reported post cannot be changed to remove the evidence; it can be edited again once a moderator resolves the reports, and it can always be deleted. The author is told only "This post can't be edited right now", never that a report exists, but the refusal is itself a hint that something is open. The previous text of an edited post is still not kept. Editing is also refused for hidden posts. Implemented by `moderation.post_has_open_report()`, which lets the posting role ask the question without being able to read any report (migration `0012`).
 - **Suspensions end by themselves** the next time `npm run lifecycle` runs, which is still a manual command.
 
 Known limits:

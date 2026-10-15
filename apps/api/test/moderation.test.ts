@@ -136,6 +136,25 @@ describe("crisis flagging on posts and comments", () => {
     expect(post.support).toBeDefined();
   });
 
+  it("applies the same check when a post is edited afterwards", async () => {
+    const c = setup();
+    const post = await c.svc.createPost(c.alice, { body: "lovely weather today" });
+    expect(c.flagged).toHaveLength(0);
+
+    const edited = await c.svc.editPost(c.alice, post.id, "I want to die");
+    expect(c.flagged).toEqual([{ kind: "post", id: post.id }]);
+    expect(edited.support?.resources[0]?.name).toBe("Campus counselling");
+    expect((await c.svc.getPost(c.bob, post.id)).support).toBeUndefined();
+  });
+
+  it("does not flag an ordinary edit", async () => {
+    const c = setup();
+    const post = await c.svc.createPost(c.alice, { body: "first" });
+    const edited = await c.svc.editPost(c.alice, post.id, "second, fixed a typo");
+    expect(c.flagged).toHaveLength(0);
+    expect(edited.support).toBeUndefined();
+  });
+
   it("never exposes support info on later reads", async () => {
     const c = setup();
     const post = await c.svc.createPost(c.alice, { body: "I want to die" });

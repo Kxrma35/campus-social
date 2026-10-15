@@ -232,14 +232,19 @@ export class ContentService {
     if (body.length === 0 || body.length > this.opts.maxBodyLength) {
       throw new ApiError("invalid_body", 422, "Posts must be 1 to 5000 characters.");
     }
-    const ok = await this.store.updatePostBody({
+    const outcome = await this.store.updatePostBody({
       postId,
       authorProfileId: actor.profileId,
       body,
       now: this.now(),
     });
-    if (!ok) this.notFound();
-    return this.getPost(actor, postId);
+    if (outcome === "missing") this.notFound();
+    if (outcome === "locked") {
+      throw new ApiError("under_review", 409, "This post can't be edited right now. Please try again later.");
+    }
+    const view = await this.getPost(actor, postId);
+    const support = await this.crisisCheck("post", postId, body);
+    return support ? { ...view, support } : view;
   }
 
   async deletePost(actor: Actor, postId: string): Promise<void> {

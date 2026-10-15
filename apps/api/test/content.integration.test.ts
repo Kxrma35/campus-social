@@ -390,6 +390,71 @@ suite("PgContentStore (app_api role)", () => {
     });
   });
 
+  describe("editing while a report is open", () => {
+    async function reporterAccount(): Promise<string> {
+      const r = await admin.query(
+        `insert into accounts (university_id, email, date_of_birth, terms_accepted_at, terms_version,
+                               status, email_verified_at, last_reverified_at, reverify_due_at)
+         values ($1, 'reporter@one.ac.ke', '2004-05-01', now(), 'v', 'active', now(), now(), now() + interval '1 year')
+         returning id`,
+        [uni1],
+      );
+      return r.rows[0].id;
+    }
+
+    async function fileReport(postId: string, accountId: string): Promise<string> {
+      const r = await admin.query(
+        `insert into moderation.reports (target_kind, target_id, reason, reporter_account_id)
+         values ('post', $1, 'harassment', $2) returning id`,
+        [postId, accountId],
+      );
+      return r.rows[0].id;
+    }
+
+    it("lets the author edit freely until someone reports the post", async () => {
+      at(0);
+      const post = await svc.createPost(alice, { body: "v1" });
+      expect((await svc.editPost(alice, post.id, "v2")).body).toBe("v2");
+
+      await fileReport(post.id, await reporterAccount());
+      expect(await code(svc.editPost(alice, post.id, "v3"))).toBe("under_review");
+      expect((await svc.getPost(bob, post.id)).body).toBe("v2");
+    });
+
+    it("lets the author edit again once the report is resolved either way", async () => {
+      at(0);
+      const post = await svc.createPost(alice, { body: "v1" });
+      const reportId = await fileReport(post.id, await reporterAccount());
+      expect(await code(svc.editPost(alice, post.id, "v2"))).toBe("under_review");
+
+      await admin.query(`update moderation.reports set status = 'dismissed', resolved_at = now() where id = $1`, [reportId]);
+      expect((await svc.editPost(alice, post.id, "v2")).body).toBe("v2");
+
+      await admin.query(`update moderation.reports set status = 'open', resolved_at = null where id = $1`, [reportId]);
+      expect(await code(svc.editPost(alice, post.id, "v3"))).toBe("under_review");
+      await admin.query(`update moderation.reports set status = 'actioned', resolved_at = now() where id = $1`, [reportId]);
+      expect(await code(svc.editPost(alice, post.id, "v3"))).not.toBe("under_review");
+    });
+
+    it("tells no one but the author, and one post's report does not lock another", async () => {
+      at(0);
+      const reported = await svc.createPost(alice, { body: "reported" });
+      const other = await svc.createPost(alice, { body: "other" });
+      await fileReport(reported.id, await reporterAccount());
+
+      expect(await code(svc.editPost(bob, reported.id, "hijack"))).toBe("not_found");
+      expect((await svc.editPost(alice, other.id, "other v2")).body).toBe("other v2");
+    });
+
+    it("lets the posting role ask the question but not read any report", async () => {
+      at(0);
+      const post = await svc.createPost(alice, { body: "v1" });
+      const asked = await app.query(`select moderation.post_has_open_report($1) as locked`, [post.id]);
+      expect(asked.rows[0].locked).toBe(false);
+      await expect(app.query(`select * from moderation.reports`)).rejects.toThrow(/permission denied/);
+    });
+  });
+
   describe("photo alt text", () => {
     async function img() {
       return sharp({ create: { width: 40, height: 30, channels: 3, background: "#4488cc" } })

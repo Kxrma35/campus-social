@@ -187,6 +187,24 @@ describe("posting", () => {
     expect(edited.edited).toBe(true);
   });
 
+  it("refuses to edit a post while a report on it is open, and lets the author in again afterwards", async () => {
+    const post = await c.svc.createPost(c.alice, { body: "v1" });
+    c.store.postsUnderReview.add(post.id);
+
+    expect(await code(c.svc.editPost(c.alice, post.id, "v2"))).toBe("under_review");
+    expect((await c.svc.getPost(c.bob, post.id)).body).toBe("v1");
+
+    c.store.postsUnderReview.delete(post.id);
+    expect((await c.svc.editPost(c.alice, post.id, "v2")).body).toBe("v2");
+  });
+
+  it("does not tell anyone but the author that a post is under review", async () => {
+    const post = await c.svc.createPost(c.alice, { body: "v1" });
+    c.store.postsUnderReview.add(post.id);
+    expect(await code(c.svc.editPost(c.bob, post.id, "hijack"))).toBe("not_found");
+    expect(await code(c.svc.editPost(c.alice, post.id, "mine"))).toBe("under_review");
+  });
+
   it("removes a deleted post from feeds and reads at once", async () => {
     const post = await c.svc.createPost(c.alice, { body: "oops" });
     expect(await code(c.svc.deletePost(c.bob, post.id))).toBe("not_found");
