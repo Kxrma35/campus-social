@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, View } from "react-native";
 import type { Comment } from "@/core/api/types";
+import { likeHaptic } from "@/core/lib/haptics";
 import { timeAgo } from "@/core/lib/time";
 import { spacing } from "@/theme/tokens";
 import { Avatar } from "./Avatar";
@@ -46,7 +47,10 @@ export function CommentItem({
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`${comment.viewerReacted ? "Remove like" : "Like"} on this comment, ${comment.reactionCount} likes`}
-            onPress={() => onToggleReaction?.(comment)}
+            onPress={() => {
+              likeHaptic(!comment.viewerReacted);
+              onToggleReaction?.(comment);
+            }}
             style={styles.action}
           >
             <Icon name={comment.viewerReacted ? "heartFilled" : "heart"} size={20} color={heart} />

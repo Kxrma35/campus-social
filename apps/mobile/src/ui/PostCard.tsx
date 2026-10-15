@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, Animated, Pressable, StyleSheet, View } from "react-native";
 import type { Post } from "@/core/api/types";
+import { likeHaptic } from "@/core/lib/haptics";
 import { timeAgo } from "@/core/lib/time";
 import { MIN_TARGET, radius, spacing } from "@/theme/tokens";
 import { Avatar } from "./Avatar";
@@ -71,6 +72,7 @@ export function PostCard({
       pop.setValue(0.8);
       Animated.spring(pop, { toValue: 1, friction: 3, tension: 220, useNativeDriver: true }).start();
     }
+    likeHaptic(!post.viewerReacted);
     onToggleReaction?.(post);
   }
 

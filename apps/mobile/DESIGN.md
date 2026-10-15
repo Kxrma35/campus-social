@@ -156,3 +156,9 @@ The feed follows the sign-in language: calm, tinted ground, Figtree, near-black 
 - Anonymous profile: a large avatar with the two-circle mark, the handle, the chip, then the plain statement of what anonymous does and does not mean. Creating one still needs the read-and-understand tick.
 - Your data: download and close account are separated by a hairline; the close flow uses the six-box code input and inline errors, and the downloaded file is named `moku-data.json`.
 - Confirm your email and Policies use the same frame; confirm reuses the code input.
+
+## Haptics (2026-10-15)
+
+- Liking a post or a comment gives a short light tap; removing a like gives a lighter selection tick. Nothing else vibrates.
+- It is fire and forget: a device without haptics, or one that rejects the call, still likes normally, and nothing is stored or sent anywhere. The web preview does nothing.
+- The visual like pop still honours Reduce Motion; the haptic does not depend on it, because the system's own vibration setting governs it.
