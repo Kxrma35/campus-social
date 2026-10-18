@@ -16,6 +16,7 @@ For the first real run of Moku on real phones with real USIU emails. It turns "i
 | Helplines confirmed by a call (`docs/helplines.md`), or the tester briefed that numbers are unconfirmed | [ ] |
 | A moderator token issued for the moderator tester, and the console reachable privately | [ ] |
 | `ANON_MIN_ACCOUNT_AGE_DAYS` set to 1 or more (the production check refuses 0). Plan the anonymous tests for the second day, or use an account at least that old | [ ] |
+| `LINK_ENCRYPTION_KEYS` and `LINK_BLIND_INDEX_KEY` set in the test environment, or data export and account closing refuse for anyone with an anonymous profile (E3, E4) | [ ] |
 | Each tester knows this is a pilot and the policies are drafts (script below) | [ ] |
 
 ## What to tell testers
@@ -101,7 +102,7 @@ Mark each **Pass**, **Fail** or **Skipped** and write one line of what happened.
 | F4 | A slow connection (mobile data, indoors) | Loading shows, then content or a clear error; no endless spinner | | |
 | F5 | Scroll a feed of 50 or more posts on the lowest-end phone | Smooth enough to use; note any stutter | | |
 | F6 | The tab bar labels and the back button | Visible, not clipped, easy to reach with one thumb | | |
-| F7 | Rotate the phone | Nothing breaks (the app is portrait-first) | | |
+| F7 | Rotate the phone | The screen stays in portrait (rotation is locked) and nothing breaks | | |
 
 ## Bug report template
 
